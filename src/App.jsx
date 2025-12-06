@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { Star, Award, CheckCircle, Circle, Trophy, Book, ArrowRight, Home, Sparkles, Zap, Heart } from 'lucide-react';
+import React, { useState } from 'react';
 
 const courseData = {
   units: [
@@ -7,7 +6,7 @@ const courseData = {
       id: 1,
       title: "Milan Goes to School",
       page: "P. 13",
-      color: "from-blue-400 to-cyan-400",
+      color: "linear-gradient(135deg, #60a5fa 0%, #06b6d4 100%)",
       emoji: "🏫",
       vocabulary: [
         { word: "school", image: "🏫", definition: "A place where children learn" },
@@ -15,14 +14,13 @@ const courseData = {
         { word: "friend", image: "👫", definition: "Someone you like and play with" },
         { word: "classroom", image: "🚪", definition: "A room where students learn" },
         { word: "book", image: "📚", definition: "Something you read" }
-      ],
-      grammar: "am, is, are, prepositions of place"
+      ]
     },
     {
       id: 2,
       title: "Welcome Home!",
       page: "P. 28",
-      color: "from-pink-400 to-rose-400",
+      color: "linear-gradient(135deg, #f472b6 0%, #fb7185 100%)",
       emoji: "🏠",
       vocabulary: [
         { word: "mother", image: "👩", definition: "Your female parent" },
@@ -30,14 +28,13 @@ const courseData = {
         { word: "sister", image: "👧", definition: "Your female sibling" },
         { word: "brother", image: "👦", definition: "Your male sibling" },
         { word: "family", image: "👨‍👩‍👧‍👦", definition: "Parents and children together" }
-      ],
-      grammar: "Personal pronouns, Possessives"
+      ]
     },
     {
       id: 3,
       title: "Time Travel",
       page: "P. 48",
-      color: "from-purple-400 to-indigo-400",
+      color: "linear-gradient(135deg, #a78bfa 0%, #818cf8 100%)",
       emoji: "⏰",
       vocabulary: [
         { word: "morning", image: "🌅", definition: "The early part of the day" },
@@ -45,14 +42,13 @@ const courseData = {
         { word: "evening", image: "🌆", definition: "The late part of the day" },
         { word: "night", image: "🌙", definition: "When it is dark outside" },
         { word: "yesterday", image: "📅", definition: "The day before today" }
-      ],
-      grammar: "Simple present, simple past, wh-question"
+      ]
     },
     {
       id: 4,
       title: "Lucky Peter!",
       page: "P. 69",
-      color: "from-green-400 to-emerald-400",
+      color: "linear-gradient(135deg, #34d399 0%, #10b981 100%)",
       emoji: "🍀",
       vocabulary: [
         { word: "lucky", image: "🍀", definition: "Having good fortune" },
@@ -60,14 +56,13 @@ const courseData = {
         { word: "sad", image: "😢", definition: "Feeling unhappy" },
         { word: "wolf", image: "🐺", definition: "A wild animal like a big dog" },
         { word: "afraid", image: "😰", definition: "Feeling scared" }
-      ],
-      grammar: "Simple Past, Negation"
+      ]
     },
     {
       id: 5,
       title: "Gifts and Gifts",
       page: "P. 85",
-      color: "from-yellow-400 to-orange-400",
+      color: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
       emoji: "🎁",
       vocabulary: [
         { word: "sweater", image: "🧥", definition: "Warm clothing for cold weather" },
@@ -75,14 +70,13 @@ const courseData = {
         { word: "many", image: "🔢", definition: "A large number of things" },
         { word: "bag", image: "👜", definition: "Something to carry things in" },
         { word: "much", image: "📊", definition: "A large amount" }
-      ],
-      grammar: "Uncountable nouns, How much/How many, Articles"
+      ]
     },
     {
       id: 6,
       title: "Celebrations",
       page: "P. 99",
-      color: "from-red-400 to-pink-400",
+      color: "linear-gradient(135deg, #ef4444 0%, #f472b6 100%)",
       emoji: "🎉",
       vocabulary: [
         { word: "birthday", image: "🎂", definition: "The day you were born" },
@@ -90,14 +84,13 @@ const courseData = {
         { word: "cake", image: "🍰", definition: "Sweet food for special days" },
         { word: "happy", image: "😄", definition: "Feeling very pleased" },
         { word: "surprise", image: "😲", definition: "Something unexpected" }
-      ],
-      grammar: "Comparatives and Superlatives"
+      ]
     },
     {
       id: 7,
       title: "Vacationing",
       page: "P. 115",
-      color: "from-teal-400 to-cyan-400",
+      color: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
       emoji: "🏖️",
       vocabulary: [
         { word: "holiday", image: "🏖️", definition: "A time for fun and rest" },
@@ -105,14 +98,13 @@ const courseData = {
         { word: "swim", image: "🏊", definition: "Move through water" },
         { word: "travel", image: "✈️", definition: "Go to different places" },
         { word: "visit", image: "🚗", definition: "Go to see a place or person" }
-      ],
-      grammar: "Prepositions of location"
+      ]
     },
     {
       id: 8,
       title: "Amazing Creatures",
       page: "P. 132",
-      color: "from-blue-500 to-purple-500",
+      color: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
       emoji: "🦁",
       vocabulary: [
         { word: "animal", image: "🦁", definition: "A living creature" },
@@ -120,297 +112,273 @@ const courseData = {
         { word: "fish", image: "🐟", definition: "Animal that lives in water" },
         { word: "magician", image: "🎩", definition: "Person who does magic tricks" },
         { word: "water", image: "💧", definition: "Clear liquid we drink" }
-      ],
-      grammar: "Simple Present"
+      ]
     }
   ]
 };
 
-const VocabCourse = () => {
-  const [currentScreen, setCurrentScreen] = useState('home');
+function App() {
   const [selectedUnit, setSelectedUnit] = useState(null);
-  const [currentActivity, setCurrentActivity] = useState(null);
-  const [activityIndex, setActivityIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState([]);
-  const [score, setScore] = useState(0);
-  const [totalStars, setTotalStars] = useState(0);
   const [completedUnits, setCompletedUnits] = useState([]);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [unitScores, setUnitScores] = useState({});
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  const generateActivities = (unit) => {
-    const activities = [];
-    const vocab = unit.vocabulary;
-
-    activities.push({
-      type: 'picture-choice',
-      title: 'Find the Picture',
-      instruction: 'Click on the picture that matches the word',
-      icon: '🖼️',
-      questions: vocab.map(v => ({
-        word: v.word,
-        correct: v.image,
-        options: shuffleArray([v.image, ...getRandomImages(vocab, v.image, 2)]),
-        definition: v.definition
-      }))
-    });
-
-    activities.push({
-      type: 'word-choice',
-      title: 'Find the Word',
-      instruction: 'Click on the word that matches the picture',
-      icon: '✍️',
-      questions: vocab.map(v => ({
-        image: v.image,
-        correct: v.word,
-        options: shuffleArray([v.word, ...getRandomWords(vocab, v.word, 2)]),
-        definition: v.definition
-      }))
-    });
-
-    activities.push({
-      type: 'matching',
-      title: 'Match Words and Pictures',
-      instruction: 'Click the picture that matches each word',
-      icon: '🔗',
-      pairs: vocab.map(v => ({ word: v.word, image: v.image, definition: v.definition }))
-    });
-
-    activities.push({
-      type: 'quiz',
-      title: 'Unit Quiz',
-      instruction: 'Answer all questions to complete the unit',
-      icon: '📝',
-      questions: vocab.map(v => ({
-        question: `What does "${v.word}" mean?`,
-        image: v.image,
-        correct: v.definition,
-        options: shuffleArray([v.definition, ...getRandomDefinitions(vocab, v.definition, 2)])
-      }))
-    });
-
-    return activities;
-  };
-
-  const shuffleArray = (arr) => [...arr].sort(() => Math.random() - 0.5);
-  
-  const getRandomImages = (vocab, exclude, count) => {
-    return vocab.filter(v => v.image !== exclude).sort(() => Math.random() - 0.5).slice(0, count).map(v => v.image);
-  };
-
-  const getRandomWords = (vocab, exclude, count) => {
-    return vocab.filter(v => v.word !== exclude).sort(() => Math.random() - 0.5).slice(0, count).map(v => v.word);
-  };
-
-  const getRandomDefinitions = (vocab, exclude, count) => {
-    return vocab.filter(v => v.definition !== exclude).sort(() => Math.random() - 0.5).slice(0, count).map(v => v.definition);
-  };
-
-  const handleUnitSelect = (unit) => {
-    setSelectedUnit(unit);
-    const activities = generateActivities(unit);
-    setCurrentActivity(activities[0]);
-    setActivityIndex(0);
-    setUserAnswers([]);
-    setScore(0);
-    setCurrentScreen('activity');
-  };
-
-  const handleAnswer = (questionIndex, answer, correct) => {
-    const newAnswers = [...userAnswers];
-    newAnswers[questionIndex] = { answer, correct };
-    setUserAnswers(newAnswers);
-    setIsCorrect(answer === correct);
-    
-    if (answer === correct) {
-      const newScore = score + 10;
-      setScore(newScore);
-      setTotalStars(totalStars + 1);
-      const messages = [
-        '⭐ Excellent! You got it!',
-        '⭐ Super job! That\'s right!',
-        '⭐ Wonderful! Perfect answer!',
-        '⭐ Amazing work! Correct!',
-        '⭐ Fantastic! You\'re doing great!'
-      ];
-      setFeedbackMessage(messages[Math.floor(Math.random() * messages.length)]);
-    } else {
-      setFeedbackMessage(`Not quite! The correct answer is: ${correct}`);
-    }
-    
-    setShowFeedback(true);
-    setTimeout(() => setShowFeedback(false), 2500);
-  };
-
-  const nextActivity = () => {
-    const activities = generateActivities(selectedUnit);
-    if (activityIndex < activities.length - 1) {
-      setActivityIndex(activityIndex + 1);
-      setCurrentActivity(activities[activityIndex + 1]);
-      setUserAnswers([]);
-    } else {
-      if (!completedUnits.includes(selectedUnit.id)) {
-        setCompletedUnits([...completedUnits, selectedUnit.id]);
-      }
-      const newUnitScores = { ...unitScores };
-      newUnitScores[selectedUnit.id] = score;
-      setUnitScores(newUnitScores);
-      setShowConfetti(true);
-      setCurrentScreen('completion');
-    }
-  };
+  const [totalStars, setTotalStars] = useState(0);
 
   const calculateProgress = () => {
     return Math.round((completedUnits.length / courseData.units.length) * 100);
   };
 
-  const getBadge = (unitId) => {
-    if (!completedUnits.includes(unitId)) return null;
-    const score = unitScores[unitId] || 0;
-    const maxScore = 200;
-    const percentage = (score / maxScore) * 100;
-    if (percentage >= 90) return { name: '🥇 Gold', color: 'text-yellow-500' };
-    if (percentage >= 70) return { name: '🥈 Silver', color: 'text-gray-400' };
-    return { name: '🥉 Bronze', color: 'text-orange-600' };
-  };
-
-  useEffect(() => {
-    if (showConfetti) {
-      const timer = setTimeout(() => setShowConfetti(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showConfetti]);
-
-  if (currentScreen === 'home') {
+  if (selectedUnit) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 left-10 text-6xl animate-bounce">⭐</div>
-          <div className="absolute top-20 right-20 text-5xl animate-pulse">🎨</div>
-          <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{animationDelay: '0.5s'}}>📚</div>
-          <div className="absolute bottom-10 right-10 text-6xl animate-pulse" style={{animationDelay: '1s'}}>✨</div>
-        </div>
+      <div style={{
+        minHeight: '100vh',
+        background: selectedUnit.color,
+        padding: '20px'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          <button
+            onClick={() => setSelectedUnit(null)}
+            style={{
+              background: 'white',
+              border: 'none',
+              padding: '15px 30px',
+              borderRadius: '10px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+              marginBottom: '20px'
+            }}
+          >
+            ← Back to Home
+          </button>
 
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="bg-white bg-opacity-95 backdrop-blur rounded-3xl shadow-2xl p-8 mb-6">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <Sparkles className="w-12 h-12 text-purple-600 animate-pulse" />
-                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-                  Grade 4 English Adventure
-                </h1>
-                <Sparkles className="w-12 h-12 text-pink-600 animate-pulse" />
-              </div>
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Book className="w-6 h-6 text-purple-600" />
-                <p className="text-xl font-semibold text-gray-700">Symphony English Course - Book 4</p>
-              </div>
-              <p className="text-lg text-gray-600 italic">Learn vocabulary with fun games and activities! 🎮</p>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+              <div style={{ fontSize: '80px', marginBottom: '20px' }}>{selectedUnit.emoji}</div>
+              <h2 style={{ fontSize: '36px', color: '#1f2937', marginBottom: '10px' }}>
+                {selectedUnit.title}
+              </h2>
+              <p style={{ fontSize: '18px', color: '#6b7280' }}>{selectedUnit.page}</p>
             </div>
 
-            <div className="mt-8 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-6 h-6 text-purple-600" />
-                  <span className="text-lg font-bold text-gray-800">Your Learning Journey</span>
-                </div>
-                <span className="text-2xl font-black text-purple-600">{calculateProgress()}%</span>
-              </div>
-              
-              <div className="relative w-full bg-white rounded-full h-6 mb-4 shadow-inner overflow-hidden">
-                <div 
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
-                  style={{ width: `${calculateProgress()}%` }}
-                >
-                  {calculateProgress() > 10 && <span className="text-white font-bold text-sm">🚀</span>}
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow">
-                  <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
-                  <span className="text-lg font-bold text-gray-800">{totalStars} Stars</span>
-                </div>
-                <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow">
-                  <Trophy className="w-6 h-6 text-orange-500" />
-                  <span className="text-lg font-bold text-gray-800">{completedUnits.length}/{courseData.units.length} Units</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courseData.units.map((unit) => {
-              const isCompleted = completedUnits.includes(unit.id);
-              const badge = getBadge(unit.id);
-              
-              return (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '20px'
+            }}>
+              {selectedUnit.vocabulary.map((vocab, index) => (
                 <div
-                  key={unit.id}
-                  className={`group relative bg-white rounded-2xl shadow-xl cursor-pointer transition-all transform hover:scale-105 hover:shadow-2xl overflow-hidden ${
-                    isCompleted ? 'ring-4 ring-green-400' : ''
-                  }`}
-                  onClick={() => handleUnitSelect(unit)}
+                  key={index}
+                  style={{
+                    background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                    borderRadius: '15px',
+                    padding: '30px',
+                    textAlign: 'center',
+                    border: '3px solid #d1d5db',
+                    transition: 'transform 0.2s',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                  <div className={`h-32 bg-gradient-to-br ${unit.color} relative overflow-hidden`}>
-                    <div className="absolute inset-0 bg-white bg-opacity-20 backdrop-blur-sm"></div>
-                    <div className="absolute top-4 right-4">
-                      {isCompleted ? (
-                        <CheckCircle className="w-10 h-10 text-white drop-shadow-lg" />
-                      ) : (
-                        <Circle className="w-10 h-10 text-white opacity-50" />
-                      )}
-                    </div>
-                    <div className="absolute bottom-4 left-4 text-6xl drop-shadow-lg transform group-hover:scale-110 transition-transform">
-                      {unit.emoji}
-                    </div>
-                    <div className="absolute top-4 left-4 bg-white bg-opacity-30 backdrop-blur px-3 py-1 rounded-full">
-                      <span className="text-sm font-bold text-white">Unit {unit.id}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors">
-                      {unit.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-3">{unit.page}</p>
-                    
-                    {badge && (
-                      <div className="inline-flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-full mb-3 shadow-sm">
-                        <Award className={`w-4 h-4 ${badge.color}`} />
-                        <span className="text-sm font-bold text-gray-800">{badge.name} Badge</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <span className="font-semibold">{unit.vocabulary.length} words</span>
-                        <span>•</span>
-                        <span className="font-semibold">4 activities</span>
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-purple-600 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
+                  <div style={{ fontSize: '60px', marginBottom: '15px' }}>{vocab.image}</div>
+                  <h3 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>
+                    {vocab.word}
+                  </h3>
+                  <p style={{ fontSize: '16px', color: '#6b7280', fontStyle: 'italic' }}>
+                    {vocab.definition}
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 text-center bg-white bg-opacity-90 backdrop-blur rounded-2xl p-6 shadow-xl">
-            <Heart className="w-8 h-8 text-red-500 mx-auto mb-2 animate-pulse" />
-            <p className="text-lg font-semibold text-gray-700">
-              Keep learning! Every word you learn makes you smarter! 🌟
-            </p>
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  return <div>Loading...</div>;
-};
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px'
+    }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '30px',
+          padding: '50px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          marginBottom: '30px'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{
+              fontSize: '56px',
+              fontWeight: 'bold',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '15px'
+            }}>
+              ✨ Grade 4 English Adventure ✨
+            </h1>
+            <p style={{ fontSize: '24px', color: '#6b7280', marginBottom: '10px' }}>
+              📚 Symphony English Course - Book 4
+            </p>
+            <p style={{ fontSize: '18px', color: '#9ca3af', fontStyle: 'italic' }}>
+              Learn vocabulary with fun games and activities! 🎮
+            </p>
+          </div>
 
-export default VocabCourse;
+          <div style={{
+            background: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)',
+            borderRadius: '20px',
+            padding: '30px',
+            marginTop: '30px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+                ⚡ Your Learning Journey
+              </span>
+              <span style={{ fontSize: '28px', fontWeight: 'bold', color: '#9333ea' }}>
+                {calculateProgress()}%
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              gap: '20px'
+            }}>
+              <div style={{
+                background: 'white',
+                borderRadius: '20px',
+                padding: '15px 30px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>
+                  ⭐ {totalStars} Stars
+                </span>
+              </div>
+              <div style={{
+                background: 'white',
+                borderRadius: '20px',
+                padding: '15px 30px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#1f2937' }}>
+                  🏆 {completedUnits.length}/{courseData.units.length} Units
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+          gap: '25px'
+        }}>
+          {courseData.units.map((unit) => (
+            <div
+              key={unit.id}
+              onClick={() => setSelectedUnit(unit)}
+              style={{
+                background: 'white',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                transition: 'transform 0.3s, box-shadow 0.3s',
+                border: completedUnits.includes(unit.id) ? '4px solid #10b981' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+              }}
+            >
+              <div style={{
+                height: '150px',
+                background: unit.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                <div style={{ fontSize: '80px' }}>{unit.emoji}</div>
+                <div style={{
+                  position: 'absolute',
+                  top: '15px',
+                  left: '15px',
+                  background: 'rgba(255,255,255,0.3)',
+                  padding: '8px 15px',
+                  borderRadius: '10px',
+                  fontWeight: 'bold',
+                  color: 'white'
+                }}>
+                  Unit {unit.id}
+                </div>
+              </div>
+
+              <div style={{ padding: '25px' }}>
+                <h3 style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  marginBottom: '10px'
+                }}>
+                  {unit.title}
+                </h3>
+                <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '15px' }}>
+                  {unit.page}
+                </p>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: '14px',
+                  color: '#9ca3af'
+                }}>
+                  <span style={{ fontWeight: '600' }}>{unit.vocabulary.length} words</span>
+                  <span style={{ fontSize: '20px' }}>→</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          background: 'white',
+          borderRadius: '20px',
+          padding: '30px',
+          textAlign: 'center',
+          marginTop: '30px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+        }}>
+          <div style={{ fontSize: '40px', marginBottom: '15px' }}>❤️</div>
+          <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
+            Keep learning! Every word you learn makes you smarter! 🌟
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
