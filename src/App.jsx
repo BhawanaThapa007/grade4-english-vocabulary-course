@@ -1,77 +1,43 @@
-import React, { useState } from 'react';
+// COPY THIS ENTIRE FILE TO src/App.jsx
+
+import React, { useState, useEffect } from 'react';
 
 const courseData = {
   units: [
-    { id: 1, title: "Milan Goes to School", page: "P. 13", color: "linear-gradient(135deg, #60a5fa 0%, #06b6d4 100%)", emoji: "🏫",
+    { id: 1, title: "Milan Goes to School", page: "P. 13", color: "#60a5fa", emoji: "🏫",
       vocabulary: [
-        { word: "school", image: "🏫", definition: "A place where children learn" },
-        { word: "teacher", image: "👩‍🏫", definition: "A person who teaches students" },
-        { word: "friend", image: "👫", definition: "Someone you like and play with" },
-        { word: "classroom", image: "🚪", definition: "A room where students learn" },
-        { word: "book", image: "📚", definition: "Something you read" }
+        { word: "school", image: "🏫", definition: "A place where children learn", sentence: "I go to ___ every morning.", scrambled: "ooclsh" },
+        { word: "teacher", image: "👩‍🏫", definition: "A person who teaches students", sentence: "My ___ helps me learn.", scrambled: "rcehate" },
+        { word: "friend", image: "👫", definition: "Someone you like and play with", sentence: "Sara is my best ___.", scrambled: "ifrned" },
+        { word: "classroom", image: "🚪", definition: "A room where students learn", sentence: "We study in our ___.", scrambled: "csraoslom" },
+        { word: "book", image: "📚", definition: "Something you read", sentence: "I have a new ___.", scrambled: "okob" }
       ]
     },
-    { id: 2, title: "Welcome Home!", page: "P. 28", color: "linear-gradient(135deg, #f472b6 0%, #fb7185 100%)", emoji: "🏠",
+    { id: 2, title: "Welcome Home!", page: "P. 28", color: "#f472b6", emoji: "🏠",
       vocabulary: [
-        { word: "mother", image: "👩", definition: "Your female parent" },
-        { word: "father", image: "👨", definition: "Your male parent" },
-        { word: "sister", image: "👧", definition: "Your female sibling" },
-        { word: "brother", image: "👦", definition: "Your male sibling" },
-        { word: "family", image: "👨‍👩‍👧‍👦", definition: "Parents and children together" }
+        { word: "mother", image: "👩", definition: "Your female parent", sentence: "My ___ cooks food.", scrambled: "omthre" },
+        { word: "father", image: "👨", definition: "Your male parent", sentence: "My ___ works hard.", scrambled: "atfher" },
+        { word: "sister", image: "👧", definition: "Your female sibling", sentence: "I play with my ___.", scrambled: "essitr" },
+        { word: "brother", image: "👦", definition: "Your male sibling", sentence: "My ___ is funny.", scrambled: "orbhert" },
+        { word: "family", image: "👨‍👩‍👧‍👦", definition: "Parents and children together", sentence: "I love my ___.", scrambled: "aifmly" }
       ]
     },
-    { id: 3, title: "Time Travel", page: "P. 48", color: "linear-gradient(135deg, #a78bfa 0%, #818cf8 100%)", emoji: "⏰",
+    { id: 3, title: "Time Travel", page: "P. 48", color: "#a78bfa", emoji: "⏰",
       vocabulary: [
-        { word: "morning", image: "🌅", definition: "The early part of the day" },
-        { word: "afternoon", image: "☀️", definition: "The middle part of the day" },
-        { word: "evening", image: "🌆", definition: "The late part of the day" },
-        { word: "night", image: "🌙", definition: "When it is dark outside" },
-        { word: "yesterday", image: "📅", definition: "The day before today" }
+        { word: "morning", image: "🌅", definition: "The early part of the day", sentence: "I wake up in the ___.", scrambled: "onmrnig" },
+        { word: "afternoon", image: "☀️", definition: "The middle part of the day", sentence: "Lunch is in the ___.", scrambled: "atefronn" },
+        { word: "evening", image: "🌆", definition: "The late part of the day", sentence: "The sun sets in the ___.", scrambled: "eevnnig" },
+        { word: "night", image: "🌙", definition: "When it is dark outside", sentence: "I sleep at ___.", scrambled: "thnig" },
+        { word: "yesterday", image: "📅", definition: "The day before today", sentence: "I played ___.", scrambled: "eysrtedya" }
       ]
     },
-    { id: 4, title: "Lucky Peter!", page: "P. 69", color: "linear-gradient(135deg, #34d399 0%, #10b981 100%)", emoji: "🍀",
+    { id: 4, title: "Lucky Peter!", page: "P. 69", color: "#34d399", emoji: "🍀",
       vocabulary: [
-        { word: "lucky", image: "🍀", definition: "Having good fortune" },
-        { word: "happy", image: "😊", definition: "Feeling joy" },
-        { word: "sad", image: "😢", definition: "Feeling unhappy" },
-        { word: "wolf", image: "🐺", definition: "A wild animal like a big dog" },
-        { word: "afraid", image: "😰", definition: "Feeling scared" }
-      ]
-    },
-    { id: 5, title: "Gifts and Gifts", page: "P. 85", color: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)", emoji: "🎁",
-      vocabulary: [
-        { word: "sweater", image: "🧥", definition: "Warm clothing for cold weather" },
-        { word: "gift", image: "🎁", definition: "Something you give to someone" },
-        { word: "many", image: "🔢", definition: "A large number of things" },
-        { word: "bag", image: "👜", definition: "Something to carry things in" },
-        { word: "much", image: "📊", definition: "A large amount" }
-      ]
-    },
-    { id: 6, title: "Celebrations", page: "P. 99", color: "linear-gradient(135deg, #ef4444 0%, #f472b6 100%)", emoji: "🎉",
-      vocabulary: [
-        { word: "birthday", image: "🎂", definition: "The day you were born" },
-        { word: "party", image: "🎉", definition: "A celebration with friends" },
-        { word: "cake", image: "🍰", definition: "Sweet food for special days" },
-        { word: "happy", image: "😄", definition: "Feeling very pleased" },
-        { word: "surprise", image: "😲", definition: "Something unexpected" }
-      ]
-    },
-    { id: 7, title: "Vacationing", page: "P. 115", color: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)", emoji: "🏖️",
-      vocabulary: [
-        { word: "holiday", image: "🏖️", definition: "A time for fun and rest" },
-        { word: "beach", image: "🏝️", definition: "Sandy place by the sea" },
-        { word: "swim", image: "🏊", definition: "Move through water" },
-        { word: "travel", image: "✈️", definition: "Go to different places" },
-        { word: "visit", image: "🚗", definition: "Go to see a place or person" }
-      ]
-    },
-    { id: 8, title: "Amazing Creatures", page: "P. 132", color: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)", emoji: "🦁",
-      vocabulary: [
-        { word: "animal", image: "🦁", definition: "A living creature" },
-        { word: "sea", image: "🌊", definition: "Large body of salt water" },
-        { word: "fish", image: "🐟", definition: "Animal that lives in water" },
-        { word: "magician", image: "🎩", definition: "Person who does magic tricks" },
-        { word: "water", image: "💧", definition: "Clear liquid we drink" }
+        { word: "lucky", image: "🍀", definition: "Having good fortune", sentence: "I am ___ today.", scrambled: "cukyl" },
+        { word: "happy", image: "😊", definition: "Feeling joy", sentence: "She feels ___.", scrambled: "appyh" },
+        { word: "sad", image: "😢", definition: "Feeling unhappy", sentence: "He was ___.", scrambled: "das" },
+        { word: "wolf", image: "🐺", definition: "A wild animal", sentence: "The ___ howls.", scrambled: "lofw" },
+        { word: "afraid", image: "😰", definition: "Feeling scared", sentence: "I am ___.", scrambled: "airfad" }
       ]
     }
   ]
@@ -79,336 +45,269 @@ const courseData = {
 
 function App() {
   const [screen, setScreen] = useState('welcome');
-  const [studentName, setStudentName] = useState('');
+  const [student, setStudent] = useState('');
   const [nameInput, setNameInput] = useState('');
-  const [selectedUnit, setSelectedUnit] = useState(null);
-  const [activityType, setActivityType] = useState(0);
-  const [currentQ, setCurrentQ] = useState(0);
+  const [unit, setUnit] = useState(null);
+  const [activity, setActivity] = useState(0);
+  const [question, setQuestion] = useState(0);
   const [score, setScore] = useState(0);
-  const [totalStars, setTotalStars] = useState(0);
+  const [stars, setStars] = useState(0);
   const [completed, setCompleted] = useState([]);
+  const [unlocked, setUnlocked] = useState([1]);
   const [feedback, setFeedback] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [showFB, setShowFB] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [input, setInput] = useState('');
+  const [hints, setHints] = useState(3);
+  const [showHint, setShowHint] = useState(false);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
-  const startSession = () => {
+  const speak = (text) => {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.8;
+      window.speechSynthesis.speak(u);
+    }
+  };
+
+  const start = () => {
     if (nameInput.trim()) {
-      setStudentName(nameInput.trim());
+      setStudent(nameInput.trim());
       setScreen('home');
     }
   };
 
-  const selectUnit = (unit) => {
-    setSelectedUnit(unit);
-    setActivityType(0);
-    setCurrentQ(0);
+  const selectUnit = (u) => {
+    if (!unlocked.includes(u.id)) return alert('🔒 Complete previous units first!');
+    setUnit(u);
+    setActivity(0);
+    setQuestion(0);
     setScore(0);
-    setCorrectCount(0);
+    setCorrect(0);
+    setStreak(0);
     setScreen('activity');
   };
 
-  const handleAnswer = (answer, correct) => {
-    const isCorrect = answer === correct;
+  const handleAnswer = (ans, correctAns, isText = false) => {
+    const isCorrect = isText ? ans.toLowerCase().trim() === correctAns.toLowerCase() : ans === correctAns;
+    
     if (isCorrect) {
-      setScore(score + 10);
-      setTotalStars(totalStars + 1);
-      setCorrectCount(correctCount + 1);
-      setFeedback(['⭐ Excellent!', '⭐ Great job!', '⭐ Perfect!'][Math.floor(Math.random() * 3)]);
+      const pts = 10 + (streak * 2);
+      setScore(score + pts);
+      setStars(stars + 1);
+      setCorrect(correct + 1);
+      setStreak(streak + 1);
+      if (streak + 1 > maxStreak) setMaxStreak(streak + 1);
+      setFeedback(`⭐ Perfect! +${pts} pts! 🔥 ${streak + 1} streak!`);
     } else {
-      setFeedback('Try again next time!');
+      setStreak(0);
+      setFeedback(`Correct: ${correctAns}`);
     }
-    setShowFeedback(true);
+    
+    setShowFB(true);
+    setInput('');
+    
     setTimeout(() => {
-      setShowFeedback(false);
-      if (currentQ < selectedUnit.vocabulary.length - 1) {
-        setCurrentQ(currentQ + 1);
+      setShowFB(false);
+      if (question < unit.vocabulary.length - 1) {
+        setQuestion(question + 1);
       } else {
         nextActivity();
       }
-    }, 1500);
+    }, 1600);
   };
 
   const nextActivity = () => {
-    if (activityType < 3) {
-      setActivityType(activityType + 1);
-      setCurrentQ(0);
+    if (activity < 7) {
+      setActivity(activity + 1);
+      setQuestion(0);
     } else {
-      if (!completed.includes(selectedUnit.id)) {
-        setCompleted([...completed, selectedUnit.id]);
+      if (!completed.includes(unit.id)) {
+        setCompleted([...completed, unit.id]);
+        if (unit.id < 4 && !unlocked.includes(unit.id + 1)) {
+          setUnlocked([...unlocked, unit.id + 1]);
+        }
       }
       setScreen('completion');
     }
   };
 
-  const getBadge = () => {
-    const percentage = (correctCount / (selectedUnit.vocabulary.length * 4)) * 100;
-    if (percentage >= 90) return '🥇 Gold';
-    if (percentage >= 70) return '🥈 Silver';
-    return '🥉 Bronze';
+  const useHint = () => {
+    if (hints > 0) {
+      setHints(hints - 1);
+      setShowHint(true);
+      setTimeout(() => setShowHint(false), 3000);
+    }
   };
 
-  // Welcome Screen
+  // Welcome
   if (screen === 'welcome') {
     return (
-      <div style={{
-        minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-      }}>
-        <div style={{
-          background: 'white', borderRadius: '30px', padding: '60px 50px', maxWidth: '600px',
-          width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '80px', marginBottom: '20px' }}>🎓</div>
-          <h1 style={{
-            fontSize: '42px', fontWeight: 'bold',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '15px'
-          }}>
-            Welcome, Student!
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ background: 'white', borderRadius: '30px', padding: '60px 50px', maxWidth: '600px', width: '100%', boxShadow: '0 25px 70px rgba(0,0,0,0.4)', textAlign: 'center' }}>
+          <div style={{ fontSize: '100px', marginBottom: '20px' }}>🎮</div>
+          <h1 style={{ fontSize: '48px', fontWeight: 'bold', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '10px' }}>
+            English Adventure
           </h1>
-          <p style={{ fontSize: '20px', color: '#6b7280', marginBottom: '40px' }}>
-            Grade 4 English Adventure
-          </p>
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{
-              display: 'block', fontSize: '18px', fontWeight: 'bold',
-              color: '#1f2937', marginBottom: '10px', textAlign: 'left'
-            }}>
-              Please enter your name:
-            </label>
-            <input
-              type="text"
-              value={nameInput}
-              onChange={(e) => setNameInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && startSession()}
-              placeholder="Your name here..."
-              style={{
-                width: '100%', padding: '15px 20px', fontSize: '18px',
-                borderRadius: '15px', border: '3px solid #e5e7eb', outline: 'none'
-              }}
-            />
+          <p style={{ fontSize: '20px', color: '#6b7280', marginBottom: '40px' }}>Grade 4 • 8 Activities per Unit</p>
+          
+          <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '20px', borderRadius: '15px', marginBottom: '30px', fontSize: '14px', fontWeight: '600', color: '#78350f' }}>
+            🎮 Picture Match • ✍️ Word Match • 🔗 Matching • 🔤 Spelling<br/>
+            🎧 Listen & Click • 🧩 Scramble • 📝 Fill Blanks • 🏆 Quiz
           </div>
-          <button
-            onClick={startSession}
-            disabled={!nameInput.trim()}
-            style={{
-              width: '100%', padding: '18px', fontSize: '20px', fontWeight: 'bold',
-              color: 'white',
-              background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db',
-              border: 'none', borderRadius: '15px',
-              cursor: nameInput.trim() ? 'pointer' : 'not-allowed',
-              boxShadow: nameInput.trim() ? '0 4px 15px rgba(102, 126, 234, 0.4)' : 'none'
-            }}
-          >
-            Start Learning! 🚀
+
+          <input
+            type="text"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && start()}
+            placeholder="Enter your name..."
+            style={{ width: '100%', padding: '16px 20px', fontSize: '18px', borderRadius: '15px', border: '3px solid #e5e7eb', outline: 'none', marginBottom: '20px' }}
+          />
+
+          <button onClick={start} disabled={!nameInput.trim()} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db', border: 'none', borderRadius: '15px', cursor: nameInput.trim() ? 'pointer' : 'not-allowed' }}>
+            🚀 Start Adventure!
           </button>
         </div>
       </div>
     );
   }
 
-  // Home Screen
+  // Home
   if (screen === 'home') {
     const progress = Math.round((completed.length / courseData.units.length) * 100);
+    
     return (
-      <div style={{
-        minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        padding: '20px'
-      }}>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '20px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{
-            background: 'white', borderRadius: '25px', padding: '40px',
-            marginBottom: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-          }}>
-            <h2 style={{ fontSize: '32px', color: '#1f2937', textAlign: 'center', marginBottom: '10px' }}>
-              Welcome back, <span style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-              }}>{studentName}</span>! 🌟
+          <div style={{ background: 'white', borderRadius: '25px', padding: '35px', marginBottom: '25px', boxShadow: '0 15px 40px rgba(0,0,0,0.25)' }}>
+            <h2 style={{ fontSize: '36px', color: '#1f2937', marginBottom: '20px' }}>
+              Welcome, <span style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{student}</span>! 👋
             </h2>
-            <p style={{ fontSize: '18px', color: '#6b7280', textAlign: 'center', marginBottom: '25px' }}>
-              📚 Choose a unit to start learning
-            </p>
-            <div style={{
-              background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)',
-              borderRadius: '15px', padding: '25px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+
+            <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
+              <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', padding: '15px 25px', borderRadius: '15px', color: 'white', flex: 1, minWidth: '150px' }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold' }}>⭐ {stars}</div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>Stars</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', padding: '15px 25px', borderRadius: '15px', color: 'white', flex: 1, minWidth: '150px' }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold' }}>🔥 {maxStreak}</div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>Best Streak</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', padding: '15px 25px', borderRadius: '15px', color: 'white', flex: 1, minWidth: '150px' }}>
+                <div style={{ fontSize: '28px', fontWeight: 'bold' }}>💡 {hints}</div>
+                <div style={{ fontSize: '12px', fontWeight: '600' }}>Hints</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', borderRadius: '18px', padding: '25px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ fontSize: '18px', fontWeight: 'bold' }}>⚡ Progress</span>
                 <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#667eea' }}>{progress}%</span>
               </div>
-              <div style={{
-                width: '100%', height: '20px', background: 'white',
-                borderRadius: '10px', overflow: 'hidden', marginBottom: '15px'
-              }}>
-                <div style={{
-                  width: `${progress}%`, height: '100%',
-                  background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-                  transition: 'width 0.5s'
-                }} />
+              <div style={{ width: '100%', height: '25px', background: 'white', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)', transition: 'width 0.8s' }} />
               </div>
-              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-                <div style={{
-                  background: 'white', padding: '12px 25px', borderRadius: '12px',
-                  fontWeight: 'bold', fontSize: '16px'
-                }}>
-                  ⭐ {totalStars} Stars
+              <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '18px', gap: '10px' }}>
+                <div style={{ background: 'white', padding: '12px 20px', borderRadius: '12px', flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{completed.length}/4</div>
+                  <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '600' }}>Units Done</div>
                 </div>
-                <div style={{
-                  background: 'white', padding: '12px 25px', borderRadius: '12px',
-                  fontWeight: 'bold', fontSize: '16px'
-                }}>
-                  🏆 {completed.length}/{courseData.units.length} Units
+                <div style={{ background: 'white', padding: '12px 20px', borderRadius: '12px', flex: 1, textAlign: 'center' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{completed.length * 20}</div>
+                  <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: '600' }}>Words Learned</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px'
-          }}>
-            {courseData.units.map(unit => (
-              <div
-                key={unit.id}
-                onClick={() => selectUnit(unit)}
-                style={{
-                  background: 'white', borderRadius: '20px', overflow: 'hidden',
-                  cursor: 'pointer', boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                  border: completed.includes(unit.id) ? '4px solid #10b981' : 'none',
-                  transition: 'all 0.3s'
-                }}
-              >
-                <div style={{
-                  height: '130px', background: unit.color, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', position: 'relative'
-                }}>
-                  <div style={{ fontSize: '70px' }}>{unit.emoji}</div>
-                  <div style={{
-                    position: 'absolute', top: '12px', left: '12px',
-                    background: 'rgba(255,255,255,0.25)', padding: '6px 14px',
-                    borderRadius: '10px', color: 'white', fontWeight: 'bold'
-                  }}>
-                    Unit {unit.id}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '22px' }}>
+            {courseData.units.map(u => {
+              const isUnlocked = unlocked.includes(u.id);
+              const isDone = completed.includes(u.id);
+
+              return (
+                <div key={u.id} onClick={() => selectUnit(u)} style={{ background: 'white', borderRadius: '22px', overflow: 'hidden', cursor: isUnlocked ? 'pointer' : 'not-allowed', boxShadow: '0 12px 30px rgba(0,0,0,0.18)', border: isDone ? '4px solid #10b981' : 'none', opacity: isUnlocked ? 1 : 0.6', transition: 'all 0.3s', position: 'relative' }}>
+                  {!isUnlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '60px', zIndex: 2 }}>🔒</div>}
+                  
+                  <div style={{ height: '145px', background: `linear-gradient(135deg, ${u.color} 0%, ${u.color}dd 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                    <div style={{ fontSize: '80px' }}>{u.emoji}</div>
+                    <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: '10px', color: 'white', fontWeight: 'bold' }}>Unit {u.id}</div>
+                    {isDone && <div style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '35px' }}>✅</div>}
                   </div>
-                  {completed.includes(unit.id) && (
-                    <div style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '30px' }}>✅</div>
-                  )}
-                </div>
-                <div style={{ padding: '20px' }}>
-                  <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
-                    {unit.title}
-                  </h3>
-                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>{unit.page}</p>
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    fontSize: '14px', color: '#9ca3af', fontWeight: '600'
-                  }}>
-                    <span>{unit.vocabulary.length} words • 4 activities</span>
-                    <span style={{ fontSize: '20px' }}>→</span>
+                  
+                  <div style={{ padding: '20px' }}>
+                    <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>{u.title}</h3>
+                    <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>{u.page}</p>
+                    <div style={{ fontSize: '14px', color: '#9ca3af', fontWeight: '600' }}>
+                      {u.vocabulary.length} words • 8 activities
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
     );
   }
 
-  // Activity Screen
-  if (screen === 'activity' && selectedUnit) {
-    const activityNames = ['🖼️ Find the Picture', '✍️ Find the Word', '🔗 Match Words', '📝 Quiz'];
-    const v = selectedUnit.vocabulary[currentQ];
+  // Activity
+  if (screen === 'activity' && unit) {
+    const v = unit.vocabulary[question];
+    const activityNames = ['🖼️ Picture Match', '✍️ Word Match', '🔗 Matching', '🔤 Spelling', '🎧 Listen', '🧩 Scramble', '📝 Fill Blank', '🏆 Quiz'];
     let options = [];
     
-    if (activityType === 0) {
-      options = shuffle([v.image, ...selectedUnit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
-    } else if (activityType === 1) {
-      options = shuffle([v.word, ...selectedUnit.vocabulary.filter(x => x.word !== v.word).slice(0, 2).map(x => x.word)]);
-    } else if (activityType === 2) {
-      options = shuffle([v.image, ...selectedUnit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
-    } else {
-      options = shuffle([v.definition, ...selectedUnit.vocabulary.filter(x => x.definition !== v.definition).slice(0, 2).map(x => x.definition)]);
-    }
+    if (activity === 0) options = shuffle([v.image, ...unit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
+    else if (activity === 1) options = shuffle([v.word, ...unit.vocabulary.filter(x => x.word !== v.word).slice(0, 2).map(x => x.word)]);
+    else if (activity === 2) options = shuffle([v.image, ...unit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
+    else if (activity === 7) options = shuffle([v.definition, ...unit.vocabulary.filter(x => x.definition !== v.definition).slice(0, 2).map(x => x.definition)]);
 
     return (
-      <div style={{
-        minHeight: '100vh', background: selectedUnit.color, padding: '20px'
-      }}>
+      <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${unit.color} 0%, ${unit.color}dd 100%)`, padding: '20px' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <div style={{
-            background: 'white', borderRadius: '20px', padding: '20px',
-            marginBottom: '20px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
-          }}>
+          <div style={{ background: 'white', borderRadius: '20px', padding: '20px', marginBottom: '20px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-              <button
-                onClick={() => setScreen('home')}
-                style={{
-                  padding: '12px 24px', background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-                  color: 'white', border: 'none', borderRadius: '12px',
-                  fontSize: '16px', fontWeight: 'bold', cursor: 'pointer'
-                }}
-              >
-                ← Home
-              </button>
+              <button onClick={() => setScreen('home')} style={{ padding: '12px 24px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>← Home</button>
+              
               <div style={{ textAlign: 'center', flex: 1 }}>
-                <div style={{ fontSize: '24px', marginBottom: '5px' }}>
-                  {selectedUnit.emoji} {selectedUnit.title}
-                </div>
-                <div style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600' }}>
-                  Activity {activityType + 1}/4: {activityNames[activityType]}
-                </div>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>{unit.emoji} {unit.title}</div>
+                <div style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600' }}>Activity {activity + 1}/8: {activityNames[activity]}</div>
               </div>
-              <div style={{
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                padding: '12px 24px', borderRadius: '12px',
-                color: 'white', fontWeight: 'bold', fontSize: '18px'
-              }}>
-                ⭐ {score}
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', padding: '12px 20px', borderRadius: '12px', color: 'white', fontWeight: 'bold' }}>⭐ {score}</div>
+                <button onClick={useHint} disabled={hints === 0} style={{ padding: '12px 20px', background: hints > 0 ? '#8b5cf6' : '#d1d5db', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: hints > 0 ? 'pointer' : 'not-allowed' }}>💡 {hints}</button>
               </div>
             </div>
+            
             <div style={{ marginTop: '15px' }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: '14px', color: '#6b7280', marginBottom: '5px'
-              }}>
-                <span>Question {currentQ + 1}/{selectedUnit.vocabulary.length}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#6b7280', marginBottom: '5px' }}>
+                <span>Q {question + 1}/{unit.vocabulary.length}</span>
+                <span>Streak: 🔥 {streak}</span>
               </div>
-              <div style={{
-                width: '100%', height: '8px', background: '#e5e7eb',
-                borderRadius: '4px', overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${((currentQ + 1) / selectedUnit.vocabulary.length) * 100}%`,
-                  height: '100%', background: 'linear-gradient(90deg, #10b981 0%, #059669 100%)',
-                  transition: 'width 0.3s'
-                }} />
+              <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: `${((question + 1) / unit.vocabulary.length) * 100}%`, height: '100%', background: '#10b981', transition: 'width 0.3s' }} />
               </div>
             </div>
           </div>
 
-          <div style={{
-            background: 'white', borderRadius: '20px', padding: '40px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
-          }}>
-            {activityType === 0 && (
+          <div style={{ background: 'white', borderRadius: '20px', padding: '40px', boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>
+            {showHint && (
+              <div style={{ marginBottom: '20px', padding: '15px', background: '#fef3c7', borderRadius: '12px', textAlign: 'center', fontWeight: 'bold', color: '#78350f' }}>
+                💡 Hint: {v.definition}
+              </div>
+            )}
+
+            {activity === 0 && (
               <>
-                <h2 style={{ fontSize: '48px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px' }}>
-                  {v.word}
-                </h2>
+                <h2 style={{ fontSize: '48px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px' }}>{v.word}</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
                   {options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(opt, v.image)}
-                      style={{
-                        padding: '40px', fontSize: '70px', background: 'white',
-                        border: '4px solid #d1d5db', borderRadius: '15px',
-                        cursor: 'pointer', transition: 'all 0.2s'
-                      }}
-                    >
+                    <button key={i} onClick={() => handleAnswer(opt, v.image)} style={{ padding: '40px', fontSize: '70px', background: 'white', border: '4px solid #d1d5db', borderRadius: '15px', cursor: 'pointer', transition: 'all 0.2s' }}>
                       {opt}
                     </button>
                   ))}
@@ -416,22 +315,12 @@ function App() {
               </>
             )}
 
-            {activityType === 1 && (
+            {activity === 1 && (
               <>
-                <div style={{ fontSize: '100px', textAlign: 'center', marginBottom: '30px' }}>
-                  {v.image}
-                </div>
+                <div style={{ fontSize: '100px', textAlign: 'center', marginBottom: '30px' }}>{v.image}</div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                   {options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(opt, v.word)}
-                      style={{
-                        padding: '20px', fontSize: '20px', fontWeight: 'bold',
-                        background: 'white', border: '4px solid #d1d5db',
-                        borderRadius: '12px', cursor: 'pointer'
-                      }}
-                    >
+                    <button key={i} onClick={() => handleAnswer(opt, v.word)} style={{ padding: '20px', fontSize: '20px', fontWeight: 'bold', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer' }}>
                       {opt}
                     </button>
                   ))}
@@ -439,24 +328,13 @@ function App() {
               </>
             )}
 
-            {activityType === 2 && (
+            {activity === 2 && (
               <>
-                <h2 style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-                  {v.word}
-                </h2>
-                <p style={{ textAlign: 'center', fontSize: '18px', color: '#6b7280', marginBottom: '30px' }}>
-                  Click the matching picture
-                </p>
+                <h2 style={{ fontSize: '36px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>{v.word}</h2>
+                <p style={{ textAlign: 'center', fontSize: '18px', color: '#6b7280', marginBottom: '30px' }}>Click the matching picture</p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
                   {options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(opt, v.image)}
-                      style={{
-                        padding: '40px', fontSize: '70px', background: 'white',
-                        border: '4px solid #d1d5db', borderRadius: '15px', cursor: 'pointer'
-                      }}
-                    >
+                    <button key={i} onClick={() => handleAnswer(opt, v.image)} style={{ padding: '40px', fontSize: '70px', background: 'white', border: '4px solid #d1d5db', borderRadius: '15px', cursor: 'pointer' }}>
                       {opt}
                     </button>
                   ))}
@@ -464,26 +342,36 @@ function App() {
               </>
             )}
 
-            {activityType === 3 && (
+            {activity === 3 && (
+              <>
+                <div style={{ fontSize: '80px', textAlign: 'center', marginBottom: '20px' }}>{v.image}</div>
+                <h2 style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px' }}>Spell the word</h2>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
+                  placeholder="Type here..."
+                  style={{ width: '100%', padding: '20px', fontSize: '24px', borderRadius: '15px', border: '4px solid #d1d5db', outline: 'none', textAlign: 'center' }}
+                  autoFocus
+                />
+                <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', marginTop: '20px', padding: '18px', fontSize: '20px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
+                  ✓ Submit
+                </button>
+              </>
+            )}
+
+            {activity === 4 && (
               <>
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <div style={{ fontSize: '80px', marginBottom: '15px' }}>{v.image}</div>
-                  <h2 style={{ fontSize: '36px', fontWeight: 'bold' }}>{v.word}</h2>
+                  <button onClick={() => speak(v.word)} style={{ padding: '30px', fontSize: '80px', background: '#dbeafe', border: '4px solid #60a5fa', borderRadius: '20px', cursor: 'pointer', marginBottom: '20px' }}>
+                    🔊
+                  </button>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#6b7280' }}>Listen and click the correct word</p>
                 </div>
-                <p style={{ fontSize: '20px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-                  What does this word mean?
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {options.map((opt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(opt, v.definition)}
-                      style={{
-                        padding: '20px', fontSize: '18px', textAlign: 'left',
-                        background: 'white', border: '3px solid #d1d5db',
-                        borderRadius: '12px', cursor: 'pointer'
-                      }}
-                    >
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {shuffle([v.word, ...unit.vocabulary.filter(x => x.word !== v.word).slice(0, 2).map(x => x.word)]).map((opt, i) => (
+                    <button key={i} onClick={() => handleAnswer(opt, v.word)} style={{ padding: '20px', fontSize: '20px', fontWeight: 'bold', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer' }}>
                       {opt}
                     </button>
                   ))}
@@ -491,104 +379,43 @@ function App() {
               </>
             )}
 
-            {showFeedback && (
-              <div style={{
-                marginTop: '30px', padding: '20px', borderRadius: '15px',
-                background: feedback.includes('⭐') ? '#d1fae5' : '#fef3c7',
-                textAlign: 'center', fontSize: '24px', fontWeight: 'bold',
-                color: feedback.includes('⭐') ? '#065f46' : '#78350f'
-              }}>
-                {feedback}
-              </div>
+            {activity === 5 && (
+              <>
+                <div style={{ fontSize: '70px', textAlign: 'center', marginBottom: '20px' }}>{v.image}</div>
+                <h2 style={{ fontSize: '28px', fontWeight: 'bold', textAlign: 'center', marginBottom: '15px', color: '#6b7280' }}>Unscramble: <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>{v.scrambled}</span></h2>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
+                  placeholder="Type the word..."
+                  style={{ width: '100%', padding: '20px', fontSize: '24px', borderRadius: '15px', border: '4px solid #d1d5db', outline: 'none', textAlign: 'center' }}
+                  autoFocus
+                />
+                <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', marginTop: '20px', padding: '18px', fontSize: '20px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
+                  ✓ Submit
+                </button>
+              </>
             )}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  // Completion Screen
-  if (screen === 'completion') {
-    return (
-      <div style={{
-        minHeight: '100vh', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
-      }}>
-        <div style={{
-          background: 'white', borderRadius: '30px', padding: '60px',
-          maxWidth: '700px', width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '100px', marginBottom: '20px' }}>🏆</div>
-          <h1 style={{ fontSize: '48px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
-            🎉 Congratulations, {studentName}! 🎉
-          </h1>
-          <p style={{ fontSize: '28px', color: '#6b7280', marginBottom: '30px' }}>
-            You completed <span style={{ fontWeight: 'bold', color: '#10b981' }}>{selectedUnit.title}</span>!
-          </p>
-          
-          <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '30px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              padding: '30px', borderRadius: '20px'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '10px' }}>⭐</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#1f2937' }}>{score}</div>
-              <div style={{ fontSize: '16px', color: '#78350f', fontWeight: '600' }}>Stars Earned</div>
-            </div>
-            <div style={{
-              background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-              padding: '30px', borderRadius: '20px'
-            }}>
-              <div style={{ fontSize: '50px', marginBottom: '10px' }}>🏅</div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#1f2937' }}>{getBadge()}</div>
-              <div style={{ fontSize: '16px', color: '#1e40af', fontWeight: '600' }}>Badge</div>
-            </div>
-          </div>
-
-          <div style={{
-            background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
-            padding: '25px', borderRadius: '20px', marginBottom: '30px'
-          }}>
-            <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#065f46' }}>
-              You learned {selectedUnit.vocabulary.length} new words! 🌟
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <button
-              onClick={() => setScreen('home')}
-              style={{
-                flex: 1, padding: '18px', fontSize: '18px', fontWeight: 'bold',
-                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
-                color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer'
-              }}
-            >
-              ← Back to Home
-            </button>
-            <button
-              onClick={() => {
-                const nextUnit = courseData.units.find(u => u.id === selectedUnit.id + 1);
-                if (nextUnit) selectUnit(nextUnit);
-                else setScreen('home');
-              }}
-              style={{
-                flex: 1, padding: '18px', fontSize: '18px', fontWeight: 'bold',
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer'
-              }}
-            >
-              Next Unit →
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-}
-
-export default App;
+            {activity === 6 && (
+              <>
+                <div style={{ fontSize: '70px', textAlign: 'center', marginBottom: '20px' }}>{v.image}</div>
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px', lineHeight: '1.6' }}>
+                  {v.sentence.split('___').map((part, i) => (
+                    <span key={i}>
+                      {part}
+                      {i < v.sentence.split('___').length - 1 && (
+                        <input
+                          type="text"
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
+                          placeholder="___"
+                          style={{ width: '150px', padding: '8px', fontSize: '20px', borderRadius: '8px', border: '3px solid #d1d5db', outline: 'none', textAlign: 'center', margin: '0 5px' }}
+                          autoFocus
+                        />
+                      )}
+                    </span>
+                  ))}
+                </h2>
