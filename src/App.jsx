@@ -1,4 +1,3 @@
-// COPY THIS ENTIRE FILE TO src/App.jsx
 
 import React, { useState, useEffect } from 'react';
 
@@ -414,8 +413,219 @@ function App() {
                           placeholder="___"
                           style={{ width: '150px', padding: '8px', fontSize: '20px', borderRadius: '8px', border: '3px solid #d1d5db', outline: 'none', textAlign: 'center', margin: '0 5px' }}
                           autoFocus
-                        />
-                      )}
-                    </span>
+                      <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', marginTop: '20px', padding: '18px', fontSize: '20px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
+                  ✓ Submit
+                </button>
+              </>
+            )}
+
+            {activity === 7 && (
+              <>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  <div style={{ fontSize: '80px', marginBottom: '15px' }}>{v.image}</div>
+                  <h2 style={{ fontSize: '36px', fontWeight: 'bold' }}>{v.word}</h2>
+                </div>
+                <p style={{ fontSize: '20px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
+                  What does this word mean?
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {options.map((opt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleAnswer(opt, v.definition)}
+                      style={{
+                        padding: '20px',
+                        fontSize: '18px',
+                        textAlign: 'left',
+                        background: 'white',
+                        border: '3px solid #d1d5db',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.borderColor = '#667eea'}
+                      onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}
+                    >
+                      {opt}
+                    </button>
                   ))}
-                </h2>
+                </div>
+              </>
+            )}
+
+            {showFB && (
+              <div style={{
+                marginTop: '30px',
+                padding: '20px',
+                borderRadius: '15px',
+                background: feedback.includes('⭐') ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+                textAlign: 'center',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: feedback.includes('⭐') ? '#065f46' : '#78350f',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+              }}>
+                {feedback}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Completion Screen
+  if (screen === 'completion') {
+    const getBadge = () => {
+      const percentage = (correct / (unit.vocabulary.length * 8)) * 100;
+      if (percentage >= 90) return { name: '🥇 Gold Master', color: '#fbbf24', bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)' };
+      if (percentage >= 75) return { name: '🥈 Silver Star', color: '#9ca3af', bg: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' };
+      if (percentage >= 60) return { name: '🥉 Bronze Hero', color: '#d97706', bg: 'linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)' };
+      return { name: '🎖️ Participant', color: '#6b7280', bg: 'linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%)' };
+    };
+
+    const badge = getBadge();
+    
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '30px',
+          padding: '60px',
+          maxWidth: '700px',
+          width: '100%',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '100px', marginBottom: '20px' }}>🏆</div>
+          <h1 style={{ fontSize: '48px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
+            🎉 Congratulations, {student}! 🎉
+          </h1>
+          <p style={{ fontSize: '28px', color: '#6b7280', marginBottom: '30px' }}>
+            You completed <span style={{ fontWeight: 'bold', color: '#10b981' }}>{unit.title}</span>!
+          </p>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '15px',
+            marginBottom: '30px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              padding: '25px 20px',
+              borderRadius: '20px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>⭐</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>{score}</div>
+              <div style={{ fontSize: '14px', color: '#78350f', fontWeight: '600' }}>Points</div>
+            </div>
+            
+            <div style={{
+              background: badge.bg,
+              padding: '25px 20px',
+              borderRadius: '20px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>🏅</div>
+              <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '5px' }}>
+                {badge.name.split(' ')[0]}
+              </div>
+              <div style={{ fontSize: '14px', color: badge.color, fontWeight: '600' }}>Badge</div>
+            </div>
+            
+            <div style={{
+              background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+              padding: '25px 20px',
+              borderRadius: '20px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔥</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#1f2937' }}>{maxStreak}</div>
+              <div style={{ fontSize: '14px', color: '#991b1b', fontWeight: '600' }}>Best Streak</div>
+            </div>
+          </div>
+
+          <div style={{
+            background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+            padding: '25px',
+            borderRadius: '20px',
+            marginBottom: '30px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+          }}>
+            <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#065f46', marginBottom: '10px' }}>
+              ✨ You learned {unit.vocabulary.length} new words! ✨
+            </p>
+            <p style={{ fontSize: '16px', color: '#047857' }}>
+              Accuracy: {Math.round((correct / (unit.vocabulary.length * 8)) * 100)}% • 
+              {' '}{correct}/{unit.vocabulary.length * 8} correct answers
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <button
+              onClick={() => setScreen('home')}
+              style={{
+                flex: 1,
+                padding: '18px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                transition: 'all 0.3s'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+              onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+            >
+              ← Back to Home
+            </button>
+            
+            <button
+              onClick={() => {
+                const nextUnit = courseData.units.find(u => u.id === unit.id + 1);
+                if (nextUnit && unlocked.includes(nextUnit.id)) {
+                  selectUnit(nextUnit);
+                } else {
+                  setScreen('home');
+                }
+              }}
+              style={{
+                flex: 1,
+                padding: '18px',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                transition: 'all 0.3s'
+              }}
+              onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+              onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+            >
+              Next Unit →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+export default App;
