@@ -1,5 +1,6 @@
 {
   "name": "grade4-english-vocabulary-course",
+  "homepage": "https://BhawanaThapa007.github.io/[your-repo-name]",
   "version": "1.0.0",
   "description": "Gamified English vocabulary course for Grade 4 students based on Symphony English Course Book 4",
   "private": true,
@@ -12,6 +13,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "devDependencies": {
     "react-scripts": "5.0.1",
