@@ -181,6 +181,8 @@ function App() {
   const [showHint, setShowHint] = useState(false);
   const [welcomeMsg, setWelcomeMsg] = useState('');
   const [unitScore, setUnitScore] = useState(0);
+  const [showActivityComplete, setShowActivityComplete] = useState(false);
+  const [activityFeedback, setActivityFeedback] = useState({ message: '', emoji: '', score: 0 });
   const [leaderboard, setLeaderboard] = useState([
     "Alex Chen",
     "Maria Garcia",
@@ -191,10 +193,91 @@ function App() {
     "Liam Patel",
     "Olivia Martinez"
   ]);
+  const [startTime, setStartTime] = useState(null);
+  const [unitStartTime, setUnitStartTime] = useState(null);
+  const [detailedProgress, setDetailedProgress] = useState({});
+  const [sessionStats, setSessionStats] = useState({
+    totalTimeSpent: 0,
+    activitiesCompleted: 0,
+    questionsAnswered: 0,
+    accuracyByActivity: {}
+  });
+
+  const activityCompletionMessages = {
+    excellent: [ // 80% and above
+      { emoji: "🌟", message: "Brilliant! You're a vocabulary superstar!", color: "#fbbf24" },
+      { emoji: "🏆", message: "Outstanding! You're mastering this perfectly!", color: "#f59e0b" },
+      { emoji: "✨", message: "Exceptional work! You're absolutely brilliant!", color: "#a78bfa" },
+      { emoji: "🎯", message: "Perfect performance! You're hitting every target!", color: "#10b981" },
+      { emoji: "💎", message: "Gem-quality work! You're shining bright!", color: "#06b6d4" },
+      { emoji: "🚀", message: "Amazing! You're soaring to new heights!", color: "#ef4444" }
+    ],
+    good: [ // 60-79%
+      { emoji: "👍", message: "Good job! You're doing well, keep it up!", color: "#10b981" },
+      { emoji: "😊", message: "Nice work! You're making solid progress!", color: "#22c55e" },
+      { emoji: "⭐", message: "Well done! You're on the right track!", color: "#eab308" },
+      { emoji: "💪", message: "Strong effort! Keep up the good work!", color: "#8b5cf6" },
+      { emoji: "🎉", message: "Great! You're learning and improving!", color: "#ec4899" }
+    ],
+    average: [ // 50-59%
+      { emoji: "📚", message: "Average performance. Try reviewing the words again.", color: "#f59e0b" },
+      { emoji: "🤔", message: "Not bad, but you can do better! Keep practicing.", color: "#f97316" },
+      { emoji: "💭", message: "Fair work. Focus more and you'll improve!", color: "#fb923c" },
+      { emoji: "📖", message: "Decent effort. Review and try again for better results!", color: "#fdba74" }
+    ],
+    needsImprovement: [ // Below 50%
+      { emoji: "📝", message: "Keep trying! Review these words and practice more.", color: "#ef4444" },
+      { emoji: "🎓", message: "Don't give up! Learning takes practice and patience.", color: "#dc2626" },
+      { emoji: "💡", message: "You can do better! Take your time and focus.", color: "#f87171" },
+      { emoji: "🔄", message: "Let's improve! Go back and review the words carefully.", color: "#b91c1c" }
+    ]
+  };
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
   }, [student]);
+
+  // Load saved progress from localStorage
+  useEffect(() => {
+    if (student) {
+      const savedData = localStorage.getItem(`englishAdventure_${student}`);
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        setScore(data.score || 0);
+        setStars(data.stars || 0);
+        setCompleted(data.completed || []);
+        setUnlocked(data.unlocked || [1]);
+        setMaxStreak(data.maxStreak || 0);
+        setHints(data.hints !== undefined ? data.hints : 5);
+        setDetailedProgress(data.detailedProgress || {});
+        setSessionStats(data.sessionStats || {
+          totalTimeSpent: 0,
+          activitiesCompleted: 0,
+          questionsAnswered: 0,
+          accuracyByActivity: {}
+        });
+      }
+    }
+  }, [student]);
+
+  // Save progress to localStorage whenever important data changes
+  useEffect(() => {
+    if (student) {
+      const dataToSave = {
+        student,
+        score,
+        stars,
+        completed,
+        unlocked,
+        maxStreak,
+        hints,
+        detailedProgress,
+        sessionStats,
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
+    }
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, sessionStats]);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -228,6 +311,7 @@ function App() {
     setUnitScore(0);
     setCorrect(0);
     setStreak(0);
+    setUnitStartTime(Date.now());
     setScreen('activity');
   };
 
@@ -250,24 +334,102 @@ function App() {
       setFeedback(`❌ Correct answer: ${correctAns}`);
     }
     
+    // Update session stats
+    setSessionStats(prev => ({
+      ...prev,
+      questionsAnswered: prev.questionsAnswered + 1
+    }));
+    
     setShowFB(true);
     setInput('');
     
     setTimeout(() => {
       setShowFB(false);
-      if (question < unit.vocabulary.length - 1) {
-        setQuestion(question + 1);
+      const nextQuestionNum = question + 1;
+      
+      if (nextQuestionNum < unit.vocabulary.length) {
+        setQuestion(nextQuestionNum);
       } else {
+        // Completed all questions in this activity
         nextActivity();
       }
     }, 1600);
   };
 
   const nextActivity = () => {
-    if (activity < 7) {
-      setActivity(activity + 1);
-      setQuestion(0);
+    if (activity < 4) {  // Changed from 7 to 4 (5 activities total: 0-4)
+      // Calculate activity accuracy
+      const totalQuestionsUpToNow = (activity + 1) * unit.vocabulary.length;
+      const accuracyPercent = Math.round((correct / totalQuestionsUpToNow) * 100);
+      
+      // Update session stats
+      setSessionStats(prev => ({
+        ...prev,
+        activitiesCompleted: prev.activitiesCompleted + 1,
+        accuracyByActivity: {
+          ...prev.accuracyByActivity,
+          [`${unit.id}_${activity}`]: accuracyPercent
+        }
+      }));
+      
+      // Select feedback based on performance
+      let feedbackArray;
+      if (accuracyPercent >= 80) {
+        feedbackArray = activityCompletionMessages.excellent;
+      } else if (accuracyPercent >= 60) {
+        feedbackArray = activityCompletionMessages.good;
+      } else if (accuracyPercent >= 50) {
+        feedbackArray = activityCompletionMessages.average;
+      } else {
+        feedbackArray = activityCompletionMessages.needsImprovement;
+      }
+      
+      const randomFeedback = feedbackArray[Math.floor(Math.random() * feedbackArray.length)];
+      
+      setActivityFeedback({
+        message: randomFeedback.message,
+        emoji: randomFeedback.emoji,
+        color: randomFeedback.color,
+        accuracy: accuracyPercent
+      });
+      setShowActivityComplete(true);
+      
+      // Auto-advance after showing feedback
+      setTimeout(() => {
+        setShowActivityComplete(false);
+        setActivity(prev => prev + 1);
+        setQuestion(0);
+        setInput('');
+      }, 3500);
     } else {
+      // Calculate time spent on unit
+      const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0; // minutes
+      const finalAccuracy = Math.round((correct / (unit.vocabulary.length * 5)) * 100);
+      
+      // Save detailed progress for this unit
+      const unitProgress = {
+        unitId: unit.id,
+        unitTitle: unit.title,
+        completed: true,
+        score: unitScore,
+        accuracy: finalAccuracy,
+        timeSpent: timeSpent,
+        stars: stars,
+        streak: maxStreak,
+        completedDate: new Date().toISOString(),
+        activitiesCompleted: 5
+      };
+      
+      setDetailedProgress(prev => ({
+        ...prev,
+        [unit.id]: unitProgress
+      }));
+      
+      setSessionStats(prev => ({
+        ...prev,
+        totalTimeSpent: prev.totalTimeSpent + timeSpent
+      }));
+      
       if (!completed.includes(unit.id)) {
         setCompleted([...completed, unit.id]);
         if (unit.id < 4 && !unlocked.includes(unit.id + 1)) {
@@ -284,6 +446,180 @@ function App() {
       setShowHint(true);
       setTimeout(() => setShowHint(false), 3000);
     }
+  };
+
+  const downloadProgressReport = () => {
+    const badge = getBadge(completed.length);
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Calculate overall statistics
+    const totalWords = completed.length * 20;
+    const overallAccuracy = Object.keys(detailedProgress).length > 0
+      ? Math.round(Object.values(detailedProgress).reduce((sum, unit) => sum + unit.accuracy, 0) / Object.keys(detailedProgress).length)
+      : 0;
+    
+    // Create canvas for PDF-style report
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 1600;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // White content box
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(50, 50, canvas.width - 100, canvas.height - 100);
+
+    // Title
+    ctx.fillStyle = '#667eea';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('ENGLISH ADVENTURE', canvas.width / 2, 120);
+    ctx.font = 'bold 36px Arial';
+    ctx.fillText('Progress Report', canvas.width / 2, 170);
+
+    // Student Info
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText(`Student: ${student}`, 100, 240);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#6b7280';
+    ctx.fillText(`Generated: ${currentDate}`, 100, 275);
+
+    // Divider line
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(100, 295);
+    ctx.lineTo(canvas.width - 100, 295);
+    ctx.stroke();
+
+    // Overall Progress Section
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 26px Arial';
+    ctx.fillText('OVERALL PROGRESS', 100, 340);
+    
+    ctx.font = '22px Arial';
+    ctx.fillStyle = '#4b5563';
+    let yPos = 380;
+    ctx.fillText(`✅ Units Completed: ${completed.length}/4 (${Math.round(completed.length/4*100)}%)`, 120, yPos);
+    yPos += 35;
+    ctx.fillText(`⭐ Total Stars Earned: ${stars}`, 120, yPos);
+    yPos += 35;
+    ctx.fillText(`🔥 Best Streak: ${maxStreak}`, 120, yPos);
+    yPos += 35;
+    ctx.fillText(`🏆 Current Badge: ${badge.name} ${badge.emoji}`, 120, yPos);
+    yPos += 35;
+    ctx.fillText(`📚 Words Learned: ${totalWords}/80`, 120, yPos);
+    yPos += 35;
+    ctx.fillText(`🎯 Overall Accuracy: ${overallAccuracy}%`, 120, yPos);
+
+    // Divider line
+    yPos += 25;
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(100, yPos);
+    ctx.lineTo(canvas.width - 100, yPos);
+    ctx.stroke();
+
+    // Unit Breakdown
+    yPos += 40;
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 26px Arial';
+    ctx.fillText('UNIT BREAKDOWN', 100, yPos);
+    
+    yPos += 35;
+    ctx.font = '20px Arial';
+    
+    courseData.units.forEach((u, idx) => {
+      const unitData = detailedProgress[u.id];
+      const isComplete = completed.includes(u.id);
+      
+      ctx.fillStyle = '#667eea';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(`${u.emoji} Unit ${u.id}: ${u.title}`, 120, yPos);
+      yPos += 28;
+      
+      ctx.font = '18px Arial';
+      if (isComplete && unitData) {
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`✅ Complete`, 140, yPos);
+        yPos += 25;
+        ctx.fillStyle = '#4b5563';
+        ctx.fillText(`Score: ${unitData.score} points | Accuracy: ${unitData.accuracy}%`, 140, yPos);
+        yPos += 25;
+        ctx.fillText(`Time: ${unitData.timeSpent} minutes | Activities: ${unitData.activitiesCompleted}/5`, 140, yPos);
+      } else {
+        ctx.fillStyle = '#6b7280';
+        ctx.fillText('🔒 Not Started', 140, yPos);
+      }
+      yPos += 40;
+    });
+
+    // Divider line
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.beginPath();
+    ctx.moveTo(100, yPos);
+    ctx.lineTo(canvas.width - 100, yPos);
+    ctx.stroke();
+
+    // Recommendations
+    yPos += 40;
+    ctx.fillStyle = '#1f2937';
+    ctx.font = 'bold 26px Arial';
+    ctx.fillText('RECOMMENDATIONS', 100, yPos);
+    
+    yPos += 35;
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#4b5563';
+    
+    if (completed.length === 4) {
+      ctx.fillText('🎉 Congratulations! All units completed!', 120, yPos);
+      yPos += 30;
+      ctx.fillText('🌟 You are a Vocabulary Master!', 120, yPos);
+    } else if (overallAccuracy >= 80) {
+      ctx.fillText('✨ Excellent work! Keep up the momentum!', 120, yPos);
+      yPos += 30;
+      ctx.fillText(`🎯 ${4 - completed.length} more unit(s) to complete!`, 120, yPos);
+    } else if (overallAccuracy >= 60) {
+      ctx.fillText('👍 Good progress! Keep practicing!', 120, yPos);
+      yPos += 30;
+      ctx.fillText('📖 Review challenging words regularly.', 120, yPos);
+    } else {
+      ctx.fillText('📚 Focus on understanding word meanings.', 120, yPos);
+      yPos += 30;
+      ctx.fillText('💡 Take your time with each activity.', 120, yPos);
+    }
+
+    // Footer
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('English Adventure - Vocabulary Learning App', canvas.width / 2, canvas.height - 70);
+    ctx.fillText('Keep learning, keep growing! 🚀', canvas.width / 2, canvas.height - 45);
+
+    // Download
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.download = `${student}_Progress_Report_${dateStr}.png`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
   };
 
   const downloadCertificate = () => {
@@ -326,7 +662,7 @@ function App() {
 
     ctx.font = '24px Arial';
     ctx.fillStyle = '#ffffff';
-    const accuracy = Math.round((correct / (unit.vocabulary.length * 8)) * 100);
+    const accuracy = Math.round((correct / (unit.vocabulary.length * 5)) * 100);
     ctx.fillText(`Score: ${unitScore} points  •  Accuracy: ${accuracy}%  •  Streak: ${maxStreak}`, canvas.width / 2, 560);
 
     const badge = getBadge(completed.length);
@@ -359,11 +695,11 @@ function App() {
           <h1 style={{ fontSize: '48px', fontWeight: 'bold', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '10px' }}>
             English Adventure
           </h1>
-          <p style={{ fontSize: '20px', color: '#6b7280', marginBottom: '40px' }}>Grade 4-6 • 20 Words • 8 Activities per Unit</p>
+          <p style={{ fontSize: '20px', color: '#6b7280', marginBottom: '40px' }}>Grade 4-6 • 20 Words • 5 Activities per Unit</p>
           
           <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '20px', borderRadius: '15px', marginBottom: '30px', fontSize: '14px', fontWeight: '600', color: '#78350f' }}>
-            🎮 Picture Match • ✍️ Word Match • 🔗 Matching • 🔤 Spelling<br />
-            🎧 Listen & Click • 🧩 Scramble • 📝 Fill Blanks • 🏆 Quiz
+            📚 Multiple Choice • 🎧 Listen & Click • 🧩 Word Scramble<br />
+            📝 Fill in the Blanks • 🏆 Definition Quiz
           </div>
 
           <input
@@ -397,6 +733,16 @@ function App() {
             <p style={{ fontSize: '18px', color: '#6b7280', textAlign: 'center', marginBottom: '25px', fontStyle: 'italic' }}>
               {welcomeMsg}
             </p>
+            {completed.length > 0 && (
+              <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', padding: '15px 25px', borderRadius: '15px', marginBottom: '20px', textAlign: 'center' }}>
+                <p style={{ fontSize: '16px', color: '#667eea', fontWeight: 'bold', marginBottom: '5px' }}>
+                  🎉 You've completed {completed.length} unit{completed.length > 1 ? 's' : ''} so far!
+                </p>
+                <p style={{ fontSize: '14px', color: '#6b7280' }}>
+                  Keep going to unlock all units and become a Vocabulary Master! 🏆
+                </p>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', padding: '15px 25px', borderRadius: '15px', color: 'white', minWidth: '150px', textAlign: 'center' }}>
@@ -416,6 +762,14 @@ function App() {
                 <div style={{ fontSize: '12px', fontWeight: '600' }}>{badge.name}</div>
               </div>
             </div>
+
+            {completed.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
+                <button onClick={downloadProgressReport} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                  📊 Download Progress Report
+                </button>
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '25px' }}>
               <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', borderRadius: '18px', padding: '25px' }}>
@@ -479,7 +833,7 @@ function App() {
                     <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>{u.title}</h3>
                     <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '12px' }}>{u.page}</p>
                     <div style={{ fontSize: '14px', color: '#9ca3af', fontWeight: '600' }}>
-                      {u.vocabulary.length} words • 8 activities
+                      {u.vocabulary.length} words • 5 activities
                     </div>
                   </div>
                 </div>
@@ -502,7 +856,7 @@ function App() {
             </h1>
             <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '5px' }}>{unit.page}</p>
             <div style={{ display: 'inline-block', background: `${unit.color}22`, padding: '8px 20px', borderRadius: '20px', fontSize: '16px', fontWeight: 'bold', color: unit.color }}>
-              {unit.vocabulary.length} Words • 8 Activities
+              {unit.vocabulary.length} Words • 5 Activities
             </div>
           </div>
 
@@ -523,14 +877,11 @@ function App() {
           <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '20px', borderRadius: '15px', marginBottom: '25px' }}>
             <h4 style={{ fontSize: '18px', fontWeight: 'bold', color: '#78350f', marginBottom: '10px' }}>📋 What You'll Do:</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', fontSize: '14px', color: '#78350f', fontWeight: '600' }}>
-              <div>🎮 Picture Matching</div>
-              <div>✍️ Word Recognition</div>
-              <div>🔗 Connect & Match</div>
-              <div>🔤 Spelling Practice</div>
+              <div>📚 Multiple Choice</div>
               <div>🎧 Listening Skills</div>
               <div>🧩 Word Scrambles</div>
               <div>📝 Fill in Blanks</div>
-              <div>🏆 Final Quiz</div>
+              <div>🏆 Definition Quiz</div>
             </div>
           </div>
 
@@ -549,14 +900,47 @@ function App() {
 
   if (screen === 'activity' && unit) {
     const v = unit.vocabulary[question];
-    const activityNames = ['🖼️ Picture', '✍️ Word', '🔗 Match', '🔤 Spell', '🎧 Listen', '🧩 Scramble', '📝 Fill', '🏆 Quiz'];
+    const activityNames = ['📚 Multiple Choice', '🎧 Listen', '🧩 Scramble', '📝 Fill', '🏆 Quiz'];
     let options = [];
     
-    if (activity === 0) options = shuffle([v.image, ...unit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
+    if (activity === 0) options = shuffle([v.word, ...unit.vocabulary.filter(x => x.word !== v.word).slice(0, 3).map(x => x.word)]);
     else if (activity === 1) options = shuffle([v.word, ...unit.vocabulary.filter(x => x.word !== v.word).slice(0, 2).map(x => x.word)]);
-    else if (activity === 2) options = shuffle([v.image, ...unit.vocabulary.filter(x => x.image !== v.image).slice(0, 2).map(x => x.image)]);
-    else if (activity === 4) options = shuffle([v.word, ...unit.vocabulary.filter(x => x.word !== v.word).slice(0, 2).map(x => x.word)]);
-    else if (activity === 7) options = shuffle([v.definition, ...unit.vocabulary.filter(x => x.definition !== v.definition).slice(0, 2).map(x => x.definition)]);
+    else if (activity === 4) options = shuffle([v.definition, ...unit.vocabulary.filter(x => x.definition !== v.definition).slice(0, 2).map(x => x.definition)]);
+
+    // Activity Completion Overlay
+    if (showActivityComplete) {
+      return (
+        <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${unit.color} 0%, ${unit.color}dd 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: 'white', borderRadius: '30px', padding: '60px 50px', maxWidth: '600px', width: '100%', boxShadow: '0 25px 70px rgba(0,0,0,0.4)', textAlign: 'center', animation: 'fadeIn 0.5s' }}>
+            <div style={{ fontSize: '120px', marginBottom: '20px', animation: 'bounce 1s infinite' }}>
+              {activityFeedback.emoji}
+            </div>
+            <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>
+              Activity {activity + 1} Complete!
+            </h2>
+            <p style={{ fontSize: '20px', color: activityFeedback.color, fontWeight: 'bold', marginBottom: '30px', lineHeight: '1.6' }}>
+              {activityFeedback.message}
+            </p>
+            <div style={{ background: `linear-gradient(135deg, ${activityFeedback.color}22 0%, ${activityFeedback.color}44 100%)`, padding: '25px', borderRadius: '20px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '48px', fontWeight: 'bold', color: activityFeedback.color }}>
+                {activityFeedback.accuracy}%
+              </div>
+              <div style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600' }}>
+                Overall Accuracy
+              </div>
+            </div>
+            <div style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600', marginBottom: '20px' }}>
+              Loading next activity...
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              {[0, 1, 2, 3, 4].map(i => (
+                <div key={i} style={{ width: '40px', height: '8px', background: i <= activity ? activityFeedback.color : '#e5e7eb', borderRadius: '4px', transition: 'all 0.3s' }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div style={{ minHeight: '100vh', background: `linear-gradient(135deg, ${unit.color} 0%, ${unit.color}dd 100%)`, padding: '20px' }}>
@@ -567,7 +951,7 @@ function App() {
               
               <div style={{ textAlign: 'center', flex: 1 }}>
                 <div style={{ fontSize: '20px', marginBottom: '5px' }}>{unit.emoji} {unit.title}</div>
-                <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '600' }}>Activity {activity + 1}/8: {activityNames[activity]}</div>
+                <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '600' }}>Activity {activity + 1}/5: {activityNames[activity]}</div>
               </div>
               
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -602,10 +986,13 @@ function App() {
 
             {activity === 0 && (
               <div>
-                <h2 style={{ fontSize: '42px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px' }}>{v.word}</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '15px', color: '#6b7280' }}>Select the correct word for this definition:</h2>
+                <p style={{ textAlign: 'center', fontSize: '20px', color: '#1f2937', marginBottom: '30px', fontStyle: 'italic', lineHeight: '1.6', padding: '20px', background: '#f3f4f6', borderRadius: '12px' }}>
+                  "{v.definition}"
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
                   {options.map((opt, i) => (
-                    <button key={i} onClick={() => handleAnswer(opt, v.image)} style={{ padding: '35px', fontSize: '60px', background: 'white', border: '4px solid #d1d5db', borderRadius: '15px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
+                    <button key={i} onClick={() => handleAnswer(opt, v.word)} style={{ padding: '25px', fontSize: '20px', fontWeight: 'bold', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s', textTransform: 'capitalize' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
                       {opt}
                     </button>
                   ))}
@@ -615,7 +1002,12 @@ function App() {
 
             {activity === 1 && (
               <div>
-                <div style={{ fontSize: '90px', textAlign: 'center', marginBottom: '30px' }}>{v.image}</div>
+                <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+                  <button onClick={() => speak(v.word)} style={{ padding: '25px', fontSize: '70px', background: '#dbeafe', border: `4px solid ${unit.color}`, borderRadius: '18px', cursor: 'pointer', marginBottom: '15px' }}>
+                    🔊
+                  </button>
+                  <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#6b7280' }}>Listen carefully and select the correct word</p>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                   {options.map((opt, i) => (
                     <button key={i} onClick={() => handleAnswer(opt, v.word)} style={{ padding: '18px', fontSize: '18px', fontWeight: 'bold', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
@@ -628,82 +1020,33 @@ function App() {
 
             {activity === 2 && (
               <div>
-                <h2 style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', marginBottom: '15px' }}>{v.word}</h2>
-                <p style={{ textAlign: 'center', fontSize: '16px', color: '#6b7280', marginBottom: '25px' }}>Click the matching picture</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-                  {options.map((opt, i) => (
-                    <button key={i} onClick={() => handleAnswer(opt, v.image)} style={{ padding: '35px', fontSize: '60px', background: 'white', border: '4px solid #d1d5db', borderRadius: '15px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '12px', color: '#6b7280' }}>
+                  Unscramble this word: <span style={{ color: '#ef4444', fontFamily: 'monospace', fontSize: '28px' }}>{v.scrambled}</span>
+                </h2>
+                <p style={{ textAlign: 'center', fontSize: '16px', color: '#6b7280', marginBottom: '25px', fontStyle: 'italic' }}>Hint: {v.definition}</p>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
+                  placeholder="Type the unscrambled word..."
+                  style={{ width: '100%', padding: '18px', fontSize: '22px', borderRadius: '12px', border: '3px solid #d1d5db', outline: 'none', textAlign: 'center', marginBottom: '15px' }}
+                  autoFocus
+                />
+                <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', padding: '16px', fontSize: '18px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>
+                  ✓ Submit Answer
+                </button>
               </div>
             )}
 
             {activity === 3 && (
               <div>
-                <div style={{ fontSize: '70px', textAlign: 'center', marginBottom: '20px' }}>{v.image}</div>
-                <h2 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '25px' }}>Spell the word</h2>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
-                  placeholder="Type here..."
-                  style={{ width: '100%', padding: '18px', fontSize: '22px', borderRadius: '12px', border: '3px solid #d1d5db', outline: 'none', textAlign: 'center', marginBottom: '15px' }}
-                  autoFocus
-                />
-                <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', padding: '16px', fontSize: '18px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>
-                  ✓ Submit
-                </button>
-              </div>
-            )}
-
-            {activity === 4 && (
-              <div>
-                <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-                  <button onClick={() => speak(v.word)} style={{ padding: '25px', fontSize: '70px', background: '#dbeafe', border: `4px solid ${unit.color}`, borderRadius: '18px', cursor: 'pointer', marginBottom: '15px' }}>
-                    🔊
-                  </button>
-                  <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#6b7280' }}>Listen and click the correct word</p>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                  {options.map((opt, i) => (
-                    <button key={i} onClick={() => handleAnswer(opt, v.word)} style={{ padding: '18px', fontSize: '18px', fontWeight: 'bold', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activity === 5 && (
-              <div>
-                <div style={{ fontSize: '60px', textAlign: 'center', marginBottom: '18px' }}>{v.image}</div>
-                <h2 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '12px', color: '#6b7280' }}>
-                  Unscramble: <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>{v.scrambled}</span>
+                <h2 style={{ fontSize: '22px', fontWeight: 'bold', textAlign: 'center', marginBottom: '25px', lineHeight: '1.6', color: '#1f2937' }}>
+                  Complete the sentence:
                 </h2>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAnswer(input, v.word, true)}
-                  placeholder="Type the word..."
-                  style={{ width: '100%', padding: '18px', fontSize: '22px', borderRadius: '12px', border: '3px solid #d1d5db', outline: 'none', textAlign: 'center', marginBottom: '15px' }}
-                  autoFocus
-                />
-                <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', padding: '16px', fontSize: '18px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>
-                  ✓ Submit
-                </button>
-              </div>
-            )}
-
-            {activity === 6 && (
-              <div>
-                <div style={{ fontSize: '60px', textAlign: 'center', marginBottom: '18px' }}>{v.image}</div>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', textAlign: 'center', marginBottom: '25px', lineHeight: '1.6' }}>
+                <p style={{ fontSize: '20px', textAlign: 'center', marginBottom: '25px', lineHeight: '1.8', color: '#4b5563' }}>
                   {v.sentence.replace('___', '______')}
-                </h2>
+                </p>
                 <input
                   type="text"
                   value={input}
@@ -714,19 +1057,18 @@ function App() {
                   autoFocus
                 />
                 <button onClick={() => handleAnswer(input, v.word, true)} style={{ width: '100%', padding: '16px', fontSize: '18px', fontWeight: 'bold', background: '#10b981', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer' }}>
-                  ✓ Submit
+                  ✓ Submit Answer
                 </button>
               </div>
             )}
 
-            {activity === 7 && (
+            {activity === 4 && (
               <div>
-                <div style={{ fontSize: '70px', textAlign: 'center', marginBottom: '20px' }}>{v.image}</div>
-                <h2 style={{ fontSize: '26px', fontWeight: 'bold', textAlign: 'center', marginBottom: '10px' }}>{v.word}</h2>
-                <p style={{ textAlign: 'center', fontSize: '16px', color: '#6b7280', marginBottom: '25px' }}>Which definition is correct?</p>
+                <h2 style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', marginBottom: '15px', color: unit.color }}>{v.word}</h2>
+                <p style={{ textAlign: 'center', fontSize: '16px', color: '#6b7280', marginBottom: '25px', fontWeight: '600' }}>Select the correct definition:</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {options.map((opt, i) => (
-                    <button key={i} onClick={() => handleAnswer(opt, v.definition)} style={{ padding: '20px', fontSize: '16px', fontWeight: '600', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
+                    <button key={i} onClick={() => handleAnswer(opt, v.definition)} style={{ padding: '20px', fontSize: '16px', fontWeight: '600', background: 'white', border: '4px solid #d1d5db', borderRadius: '12px', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s', lineHeight: '1.5' }} onMouseEnter={(e) => e.target.style.borderColor = unit.color} onMouseLeave={(e) => e.target.style.borderColor = '#d1d5db'}>
                       {opt}
                     </button>
                   ))}
@@ -740,7 +1082,7 @@ function App() {
   }
 
   if (screen === 'completion') {
-    const accuracy = Math.round((correct / (unit.vocabulary.length * 8)) * 100);
+    const accuracy = Math.round((correct / (unit.vocabulary.length * 5)) * 100);
     const congratMsg = congratulationMessages[Math.floor(Math.random() * congratulationMessages.length)];
     const badge = getBadge(completed.length);
     
@@ -778,7 +1120,7 @@ function App() {
               <div style={{ fontSize: '14px', fontWeight: '600' }}>Best Streak</div>
             </div>
             <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', padding: '25px', borderRadius: '15px', color: 'white' }}>
-              <div style={{ fontSize: '36px', fontWeight: 'bold' }}>{correct}/{unit.vocabulary.length * 8}</div>
+              <div style={{ fontSize: '36px', fontWeight: 'bold' }}>{correct}/{unit.vocabulary.length * 5}</div>
               <div style={{ fontSize: '14px', fontWeight: '600' }}>Correct</div>
             </div>
           </div>
