@@ -183,16 +183,7 @@ function App() {
   const [unitScore, setUnitScore] = useState(0);
   const [showActivityComplete, setShowActivityComplete] = useState(false);
   const [activityFeedback, setActivityFeedback] = useState({ message: '', emoji: '', score: 0 });
-  const [leaderboard, setLeaderboard] = useState([
-    "Alex Chen",
-    "Maria Garcia",
-    "Jamal Williams",
-    "Sofia Rodriguez",
-    "David Kim",
-    "Emma Thompson",
-    "Liam Patel",
-    "Olivia Martinez"
-  ]);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [startTime, setStartTime] = useState(null);
   const [unitStartTime, setUnitStartTime] = useState(null);
   const [detailedProgress, setDetailedProgress] = useState({});
@@ -240,9 +231,12 @@ function App() {
   // Load saved progress from localStorage
   useEffect(() => {
     if (student) {
+      console.log('🔍 Checking for saved data for:', student);
       const savedData = localStorage.getItem(`englishAdventure_${student}`);
       if (savedData) {
+        console.log('✅ Found saved data! Loading...');
         const data = JSON.parse(savedData);
+        console.log('📊 Loaded data:', data);
         setScore(data.score || 0);
         setStars(data.stars || 0);
         setCompleted(data.completed || []);
@@ -256,6 +250,9 @@ function App() {
           questionsAnswered: 0,
           accuracyByActivity: {}
         });
+        console.log('✅ Progress loaded successfully!');
+      } else {
+        console.log('ℹ️ No saved data found. Starting fresh!');
       }
     }
   }, [student]);
@@ -275,7 +272,10 @@ function App() {
         sessionStats,
         lastUpdated: new Date().toISOString()
       };
+      console.log('💾 Saving progress for:', student);
+      console.log('📊 Data being saved:', dataToSave);
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
+      console.log('✅ Progress saved successfully!');
     }
   }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, sessionStats]);
 
@@ -394,13 +394,7 @@ function App() {
       });
       setShowActivityComplete(true);
       
-      // Auto-advance after showing feedback
-      setTimeout(() => {
-        setShowActivityComplete(false);
-        setActivity(prev => prev + 1);
-        setQuestion(0);
-        setInput('');
-      }, 3500);
+      // NO AUTO-ADVANCE - Student clicks button to continue
     } else {
       // Calculate time spent on unit
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0; // minutes
@@ -438,6 +432,13 @@ function App() {
       }
       setScreen('completion');
     }
+  };
+
+  const continueToNextActivity = () => {
+    setShowActivityComplete(false);
+    setActivity(prev => prev + 1);
+    setQuestion(0);
+    setInput('');
   };
 
   const useHint = () => {
@@ -795,15 +796,22 @@ function App() {
               <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '18px', padding: '25px' }}>
                 <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px', color: '#78350f' }}>🏆 Leaderboard</h3>
                 <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                  {leaderboard.map((playerName, idx) => (
-                    <div key={idx} style={{ background: 'white', padding: '12px 15px', borderRadius: '10px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '22px', fontWeight: 'bold', color: idx === 0 ? '#fbbf24' : idx === 1 ? '#9ca3af' : idx === 2 ? '#d97706' : '#6b7280', minWidth: '35px' }}>
-                        #{idx + 1}
-                      </span>
-                      <span style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>{playerName}</span>
+                  {leaderboard.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: '#78350f' }}>
+                      <p style={{ fontSize: '16px', marginBottom: '10px' }}>No students yet!</p>
+                      <p style={{ fontSize: '14px' }}>Complete units to appear on the leaderboard.</p>
                     </div>
-                  ))}
-                  <div style={{ background: '#e0e7ff', padding: '12px 15px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '12px', border: '3px solid #667eea' }}>
+                  ) : (
+                    leaderboard.map((playerName, idx) => (
+                      <div key={idx} style={{ background: 'white', padding: '12px 15px', borderRadius: '10px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '22px', fontWeight: 'bold', color: idx === 0 ? '#fbbf24' : idx === 1 ? '#9ca3af' : idx === 2 ? '#d97706' : '#6b7280', minWidth: '35px' }}>
+                          #{idx + 1}
+                        </span>
+                        <span style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937' }}>{playerName}</span>
+                      </div>
+                    ))
+                  )}
+                  <div style={{ background: '#e0e7ff', padding: '12px 15px', borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '12px', border: '3px solid #667eea', marginTop: leaderboard.length > 0 ? '8px' : '0' }}>
                     <span style={{ fontSize: '22px', fontWeight: 'bold', color: '#667eea', minWidth: '35px' }}>
                       #{leaderboard.length + 1}
                     </span>
@@ -921,7 +929,7 @@ function App() {
             <p style={{ fontSize: '20px', color: activityFeedback.color, fontWeight: 'bold', marginBottom: '30px', lineHeight: '1.6' }}>
               {activityFeedback.message}
             </p>
-            <div style={{ background: `linear-gradient(135deg, ${activityFeedback.color}22 0%, ${activityFeedback.color}44 100%)`, padding: '25px', borderRadius: '20px', marginBottom: '20px' }}>
+            <div style={{ background: `linear-gradient(135deg, ${activityFeedback.color}22 0%, ${activityFeedback.color}44 100%)`, padding: '25px', borderRadius: '20px', marginBottom: '30px' }}>
               <div style={{ fontSize: '48px', fontWeight: 'bold', color: activityFeedback.color }}>
                 {activityFeedback.accuracy}%
               </div>
@@ -929,13 +937,20 @@ function App() {
                 Overall Accuracy
               </div>
             </div>
-            <div style={{ fontSize: '16px', color: '#6b7280', fontWeight: '600', marginBottom: '20px' }}>
-              Loading next activity...
-            </div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '30px' }}>
               {[0, 1, 2, 3, 4].map(i => (
                 <div key={i} style={{ width: '40px', height: '8px', background: i <= activity ? activityFeedback.color : '#e5e7eb', borderRadius: '4px', transition: 'all 0.3s' }} />
               ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <button onClick={() => setScreen('home')} style={{ flex: 1, padding: '18px', fontSize: '16px', fontWeight: 'bold', background: '#6b7280', color: 'white', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
+                🏠 Back Home
+              </button>
+              <button onClick={continueToNextActivity} style={{ flex: 2, padding: '18px', fontSize: '18px', fontWeight: 'bold', color: 'white', background: `linear-gradient(135deg, ${activityFeedback.color} 0%, ${activityFeedback.color}dd 100%)`, border: 'none', borderRadius: '15px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                ➡️ Continue to Activity {activity + 2}
+              </button>
             </div>
           </div>
         </div>
