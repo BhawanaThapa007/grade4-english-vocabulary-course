@@ -510,6 +510,246 @@ const courseData = {
   ]
 };
 
+const welcomeMessages = [
+  "Ready to expand your vocabulary today?",
+  "Let's make learning an adventure!",
+  "Your brain is amazing - let's exercise it!",
+  "Every word you learn opens new doors!",
+  "Knowledge is power - let's grow together!"
+];
 
+const getBadge = (unitsCompleted) => {
+  if (unitsCompleted >= 4) return { emoji: "👑", name: "Vocabulary Master", color: "#fbbf24" };
+  if (unitsCompleted >= 3) return { emoji: "🥇", name: "Gold Achiever", color: "#f59e0b" };
+  if (unitsCompleted >= 2) return { emoji: "🥈", name: "Silver Learner", color: "#9ca3af" };
+  if (unitsCompleted >= 1) return { emoji: "🥉", name: "Bronze Starter", color: "#d97706" };
+  return { emoji: "🌟", name: "Beginner", color: "#8b5cf6" };
+};
+
+const congratulationMessages = [
+  "Outstanding work! You're becoming a vocabulary expert!",
+  "Phenomenal achievement! Your dedication is impressive!",
+  "Bravo! You've mastered another unit brilliantly!",
+  "Magnificent! Your vocabulary skills are growing rapidly!",
+  "Superb performance! Keep up the excellent work!",
+  "Exceptional! You're on the path to vocabulary mastery!",
+  "Incredible job! Your hard work is paying off!",
+  "Remarkable! You've proven your dedication to learning!"
+];
+
+const activityCompletionMessages = {
+  excellent: [
+    { emoji: "🌟", message: "Brilliant! You're a vocabulary superstar!", color: "#fbbf24" },
+    { emoji: "🏆", message: "Outstanding! You're mastering this perfectly!", color: "#f59e0b" },
+    { emoji: "✨", message: "Exceptional work! You're absolutely brilliant!", color: "#a78bfa" }
+  ],
+  good: [
+    { emoji: "👍", message: "Good job! You're doing well, keep it up!", color: "#10b981" },
+    { emoji: "😊", message: "Nice work! You're making solid progress!", color: "#22c55e" }
+  ],
+  average: [
+    { emoji: "📚", message: "Average performance. Try reviewing the words again.", color: "#f59e0b" }
+  ],
+  needsImprovement: [
+    { emoji: "📝", message: "Keep trying! Review these words and practice more.", color: "#ef4444" }
+  ]
+};
+
+function App() {
+  const [screen, setScreen] = useState('welcome');
+  const [student, setStudent] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [unit, setUnit] = useState(null);
+  const [activity, setActivity] = useState(0);
+  const [question, setQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [stars, setStars] = useState(0);
+  const [completed, setCompleted] = useState([]);
+  const [unlocked, setUnlocked] = useState([1]);
+  const [feedback, setFeedback] = useState('');
+  const [showFB, setShowFB] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [correct, setCorrect] = useState(0);
+  const [input, setInput] = useState('');
+  const [hints, setHints] = useState(5);
+  const [showHint, setShowHint] = useState(false);
+  const [welcomeMsg, setWelcomeMsg] = useState('');
+  const [unitScore, setUnitScore] = useState(0);
+  const [showActivityComplete, setShowActivityComplete] = useState(false);
+  const [activityFeedback, setActivityFeedback] = useState({ message: '', emoji: '', score: 0 });
+  const [leaderboard, setLeaderboard] = useState([]);
+
+  useEffect(() => {
+    setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
+  }, [student]);
+
+  useEffect(() => {
+    if (student) {
+      const savedData = localStorage.getItem(`englishAdventure_${student}`);
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        setScore(data.score || 0);
+        setStars(data.stars || 0);
+        setCompleted(data.completed || []);
+        setUnlocked(data.unlocked || [1]);
+        setMaxStreak(data.maxStreak || 0);
+        setHints(data.hints !== undefined ? data.hints : 5);
+      }
+    }
+  }, [student]);
+
+  useEffect(() => {
+    if (student) {
+      const dataToSave = {
+        student,
+        score,
+        stars,
+        completed,
+        unlocked,
+        maxStreak,
+        hints,
+        lastUpdated: new Date().toISOString()
+      };
+      localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
+    }
+  }, [student, score, stars, completed, unlocked, maxStreak, hints]);
+
+  const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+  const speak = (text) => {
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.8;
+      window.speechSynthesis.speak(u);
+    }
+  };
+
+  const getCurrentVocabSet = () => {
+    if (!unit) return [];
+    const unitData = vocabularyData[`unit${unit.id}`];
+    if (!unitData) return [];
+    
+    switch(activity) {
+      case 0: return unitData.multipleChoice;
+      case 1: return unitData.pronunciation;
+      case 2: return unitData.scramble;
+      case 3: return unitData.fillBlanks;
+      case 4: return unitData.quiz;
+      default: return [];
+    }
+  };
+
+  const handleStart = () => {
+    if (nameInput.trim()) {
+      setStudent(nameInput.trim());
+      setScreen('home');
+    }
+  };
+
+  const selectUnit = (u) => {
+    if (!unlocked.includes(u.id)) {
+      alert('🔒 Complete previous units first!');
+      return;
+    }
+    setUnit(u);
+    setScreen('unitIntro');
+  };
+
+  const startUnit = () => {
+    setActivity(0);
+    setQuestion(0);
+    setUnitScore(0);
+    setCorrect(0);
+    setStreak(0);
+    setScreen('activity');
+  };
+
+  const handleAnswer = (ans, correctAns, isText = false) => {
+    const isCorrect = isText 
+      ? ans.toLowerCase().trim() === correctAns.toLowerCase() 
+      : ans === correctAns;
+    
+    if (isCorrect) {
+      const pts = 10 + (streak * 2);
+      setScore(prev => prev + pts);
+      setUnitScore(prev => prev + pts);
+      setStars(prev => prev + 1);
+      setCorrect(prev => prev + 1);
+      setStreak(prev => prev + 1);
+      if (streak + 1 > maxStreak) setMaxStreak(streak + 1);
+      setFeedback(`⭐ Perfect! +${pts} pts! 🔥 ${streak + 1} streak!`);
+    } else {
+      setStreak(0);
+      setFeedback(`❌ Correct answer: ${correctAns}`);
+    }
+    
+    setShowFB(true);
+    setInput('');
+    
+    setTimeout(() => {
+      setShowFB(false);
+      const nextQuestionNum = question + 1;
+      const currentVocabSet = getCurrentVocabSet();
+      
+      if (nextQuestionNum < currentVocabSet.length) {
+        setQuestion(nextQuestionNum);
+      } else {
+        nextActivity();
+      }
+    }, 1600);
+  };
+
+  const nextActivity = () => {
+    if (activity < 4) {
+      const accuracyPercent = Math.round((correct / ((activity + 1) * 20)) * 100);
+      
+      let feedbackArray;
+      if (accuracyPercent >= 80) feedbackArray = activityCompletionMessages.excellent;
+      else if (accuracyPercent >= 60) feedbackArray = activityCompletionMessages.good;
+      else if (accuracyPercent >= 50) feedbackArray = activityCompletionMessages.average;
+      else feedbackArray = activityCompletionMessages.needsImprovement;
+      
+      const randomFeedback = feedbackArray[Math.floor(Math.random() * feedbackArray.length)];
+      
+      setActivityFeedback({
+        message: randomFeedback.message,
+        emoji: randomFeedback.emoji,
+        color: randomFeedback.color,
+        accuracy: accuracyPercent
+      });
+      setShowActivityComplete(true);
+      
+      setTimeout(() => {
+        setShowActivityComplete(false);
+        setActivity(prev => prev + 1);
+        setQuestion(0);
+        setInput('');
+      }, 3500);
+    } else {
+      if (!completed.includes(unit.id)) {
+        setCompleted(prev => [...prev, unit.id]);
+        if (unit.id < 4 && !unlocked.includes(unit.id + 1)) {
+          setUnlocked(prev => [...prev, unit.id + 1]);
+        }
+      }
+      setScreen('completion');
+    }
+  };
+
+  const useHint = () => {
+    if (hints > 0) {
+      setHints(prev => prev - 1);
+      setShowHint(true);
+      setTimeout(() => setShowHint(false), 3000);
+    }
+  };
+
+  // SCREENS START HERE - I'll continue in next message due to length...
+  
+  return <div>App content goes here</div>;
+}
+
+export default App;
 
 
