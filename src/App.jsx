@@ -513,25 +513,3 @@ const courseData = {
 
 ---
 
-### **Step 3: Save and Test**
-
-1. **Save the file** (Ctrl+S)
-2. **Refresh your browser** (or restart `npm start`)
-3. **You should now see 4 units!**
-
----
-
-## ✅ **WHAT YOU SHOULD SEE:**
-
-After refreshing, your home screen should show:
-```
-✅ Unit 1: Academic Excellence 🎓 (unlocked)
-🔒 Unit 2: Family & Relationships 👨‍👩‍👧‍👦 (locked)
-🔒 Unit 3: Science & Nature 🔬 (locked)
-🔒 Unit 4: Community & Culture 🏘️ (locked)
-```
-
-And at the top:
-```
-0/4 Units Done
-0 Words Learned
