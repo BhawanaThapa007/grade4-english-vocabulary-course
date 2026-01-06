@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-// ============================================
-// ENHANCED VOCABULARY DATA - 100 WORDS PER UNIT
-// ============================================
-
 const vocabularyData = {
   unit1: {
-    // Activity 1: Multiple Choice (20 words)
     multipleChoice: [
       { word: "knowledge", definition: "Information and understanding gained through learning" },
       { word: "assignment", definition: "A task given to students to complete" },
@@ -29,8 +24,6 @@ const vocabularyData = {
       { word: "summarize", definition: "To give a brief statement of main points" },
       { word: "evaluate", definition: "To judge the value or quality of something" }
     ],
-    
-    // Activity 2: Pronunciation - Confusing Pairs (20 words)
     pronunciation: [
       { word: "accept", confuseWith: "except", definition: "To receive or agree to something" },
       { word: "affect", confuseWith: "effect", definition: "To influence or make a difference to" },
@@ -53,8 +46,6 @@ const vocabularyData = {
       { word: "flower", confuseWith: "flour", definition: "The blossom of a plant" },
       { word: "tail", confuseWith: "tale", definition: "The rear part of an animal" }
     ],
-    
-    // Activity 3: Scramble (20 words)
     scramble: [
       { word: "scholarship", scrambled: "holarschips", definition: "Financial aid for students" },
       { word: "graduation", scrambled: "raduationg", definition: "Completion of a course of study" },
@@ -77,8 +68,6 @@ const vocabularyData = {
       { word: "answer", scrambled: "nswera", definition: "A response to a question" },
       { word: "education", scrambled: "ducatione", definition: "The process of learning" }
     ],
-    
-    // Activity 4: Fill in Blanks (20 words)
     fillBlanks: [
       { word: "intelligent", sentence: "She is very ___ and learns quickly.", definition: "Having good understanding" },
       { word: "difficult", sentence: "The math problem was too ___.", definition: "Hard to do or understand" },
@@ -101,8 +90,6 @@ const vocabularyData = {
       { word: "observe", sentence: "Scientists ___ animals in nature.", definition: "To watch carefully" },
       { word: "record", sentence: "Please ___ your results in the table.", definition: "To write down" }
     ],
-    
-    // Activity 5: Definition Quiz (20 words)
     quiz: [
       { word: "academy", definition: "A school or institution for special training" },
       { word: "scholar", definition: "A learned person or student" },
@@ -128,7 +115,6 @@ const vocabularyData = {
   }
 };
 
-// Course unit metadata
 const courseData = {
   units: [
     {
@@ -201,7 +187,11 @@ const activityCompletionMessages = {
     { emoji: "🎓", message: "Don't give up! Learning takes practice and patience.", color: "#dc2626" },
     { emoji: "💡", message: "You can do better! Take your time and focus.", color: "#f87171" },
     { emoji: "🔄", message: "Let's improve! Go back and review the words carefully.", color: "#b91c1c" }
- const [screen, setScreen] = useState('welcome');
+  ]
+};
+
+function App() {
+  const [screen, setScreen] = useState('welcome');
   const [student, setStudent] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [unit, setUnit] = useState(null);
@@ -227,8 +217,6 @@ const activityCompletionMessages = {
   const [startTime, setStartTime] = useState(null);
   const [unitStartTime, setUnitStartTime] = useState(null);
   const [activityStartTime, setActivityStartTime] = useState(null);
-  
-  // Enhanced tracking
   const [detailedProgress, setDetailedProgress] = useState({});
   const [activityRecords, setActivityRecords] = useState([]);
   const [sessionStats, setSessionStats] = useState({
@@ -238,15 +226,10 @@ const activityCompletionMessages = {
     accuracyByActivity: {}
   });
 
-  // ============================================
-  // EFFECTS
-  // ============================================
-  
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
   }, [student]);
 
-  // Load saved progress from localStorage
   useEffect(() => {
     if (student) {
       console.log('🔍 Checking for saved data for:', student);
@@ -276,7 +259,6 @@ const activityCompletionMessages = {
     }
   }, [student]);
 
-  // Save progress to localStorage whenever important data changes
   useEffect(() => {
     if (student) {
       const dataToSave = {
@@ -299,10 +281,6 @@ const activityCompletionMessages = {
     }
   }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats]);
 
-  // ============================================
-  // HELPER FUNCTIONS
-  // ============================================
-  
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
   const speak = (text) => {
@@ -313,7 +291,6 @@ const activityCompletionMessages = {
     }
   };
 
-  // Get current vocabulary set based on activity
   const getCurrentVocabSet = () => {
     if (!unit) return [];
     const unitData = vocabularyData[`unit${unit.id}`];
@@ -334,10 +311,6 @@ const activityCompletionMessages = {
     return names[actNum] || 'Activity';
   };
 
-  // ============================================
-  // MAIN FUNCTIONS
-  // ============================================
-  
   const handleStart = () => {
     if (nameInput.trim()) {
       setStudent(nameInput.trim());
@@ -386,7 +359,6 @@ const activityCompletionMessages = {
       setFeedback(`❌ Correct answer: ${correctAns}`);
     }
     
-    // Record this answer for tracking
     const answerRecord = {
       student,
       unitId: unit.id,
@@ -427,7 +399,6 @@ const activityCompletionMessages = {
 
   const nextActivity = () => {
     if (activity < 4) {
-      // Calculate accuracy for completed activity
       const totalQuestionsUpToNow = (activity + 1) * 20;
       const accuracyPercent = Math.round((correct / totalQuestionsUpToNow) * 100);
       
@@ -440,7 +411,6 @@ const activityCompletionMessages = {
         }
       }));
       
-      // Show performance feedback
       let feedbackArray;
       if (accuracyPercent >= 80) feedbackArray = activityCompletionMessages.excellent;
       else if (accuracyPercent >= 60) feedbackArray = activityCompletionMessages.good;
@@ -465,7 +435,6 @@ const activityCompletionMessages = {
         setActivityStartTime(Date.now());
       }, 3500);
     } else {
-      // Unit complete
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0;
       const finalAccuracy = Math.round((correct / 100) * 100);
       
@@ -516,32 +485,26 @@ const activityCompletionMessages = {
     canvas.height = 1600;
     const ctx = canvas.getContext('2d');
     
-    // Background gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#667eea');
     gradient.addColorStop(1, '#764ba2');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Title
     ctx.fillStyle = 'white';
     ctx.font = 'bold 60px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('📊 Progress Report', canvas.width / 2, 100);
     
-    // Student name
     ctx.font = '40px Arial';
     ctx.fillText(student, canvas.width / 2, 170);
     
-    // Date
     ctx.font = '24px Arial';
     ctx.fillText(new Date().toLocaleDateString(), canvas.width / 2, 220);
     
-    // White box for stats
     ctx.fillStyle = 'white';
     ctx.fillRect(50, 280, canvas.width - 100, 1200);
     
-    // Stats in black text
     ctx.fillStyle = '#1f2937';
     ctx.font = 'bold 32px Arial';
     ctx.textAlign = 'left';
@@ -564,7 +527,6 @@ const activityCompletionMessages = {
     ctx.fillText(`${badge.emoji} Badge: ${badge.name}`, 100, yPos);
     yPos += lineHeight + 30;
     
-    // Unit breakdown
     ctx.font = 'bold 36px Arial';
     ctx.fillText('Unit Progress:', 100, yPos);
     yPos += lineHeight + 20;
@@ -578,7 +540,6 @@ const activityCompletionMessages = {
       }
     });
     
-    // Download
     canvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -588,7 +549,8 @@ const activityCompletionMessages = {
       URL.revokeObjectURL(url);
     });
   };
-if (screen === 'welcome') {
+
+  if (screen === 'welcome') {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ maxWidth: '550px', width: '100%', background: 'white', borderRadius: '30px', padding: '50px 40px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
@@ -622,10 +584,6 @@ if (screen === 'welcome') {
     );
   }
 
-  // ============================================
-  // SCREEN: HOME
-  // ============================================
-  
   if (screen === 'home') {
     const progress = Math.round((completed.length / courseData.units.length) * 100);
     const badge = getBadge(completed.length);
@@ -757,10 +715,6 @@ if (screen === 'welcome') {
     );
   }
 
-  // ============================================
-  // SCREEN: UNIT INTRO
-  // ============================================
-  
   if (screen === 'unitIntro' && unit) {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -838,10 +792,6 @@ if (screen === 'welcome') {
     );
   }
 
-  // ============================================
-  // SCREEN: ACTIVITY
-  // ============================================
-  
   if (screen === 'activity' && unit) {
     const vocabSet = getCurrentVocabSet();
     
@@ -863,7 +813,6 @@ if (screen === 'welcome') {
     const activityNames = ['📚 Multiple Choice', '🎧 Pronunciation', '🧩 Scramble', '📝 Fill Blanks', '🏆 Quiz'];
     const activityName = activityNames[activity];
 
-    // Activity Complete Overlay
     if (showActivityComplete) {
       return (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
@@ -898,7 +847,6 @@ if (screen === 'welcome') {
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <div style={{ background: 'white', borderRadius: '25px', padding: '35px', boxShadow: '0 15px 40px rgba(0,0,0,0.25)' }}>
             
-            {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
               <div>
                 <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '5px' }}>
@@ -918,7 +866,6 @@ if (screen === 'welcome') {
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div style={{ marginBottom: '30px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: '600', color: '#6b7280' }}>Activity Progress</span>
@@ -929,14 +876,12 @@ if (screen === 'welcome') {
               </div>
             </div>
 
-            {/* Feedback */}
             {showFB && (
               <div style={{ background: feedback.includes('Perfect') ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)' : 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', padding: '20px', borderRadius: '15px', marginBottom: '25px', fontSize: '18px', fontWeight: 'bold', textAlign: 'center', color: feedback.includes('Perfect') ? '#065f46' : '#991b1b' }}>
                 {feedback}
               </div>
             )}
 
-            {/* Activity 0: Multiple Choice */}
             {activity === 0 && v && (
               <div>
                 <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', padding: '25px', borderRadius: '15px', marginBottom: '25px' }}>
@@ -969,7 +914,6 @@ if (screen === 'welcome') {
               </div>
             )}
 
-            {/* Activity 1: Pronunciation */}
             {activity === 1 && v && (
               <div>
                 <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '30px', borderRadius: '15px', marginBottom: '25px', textAlign: 'center' }}>
@@ -1011,7 +955,6 @@ if (screen === 'welcome') {
               </div>
             )}
 
-            {/* Activity 2: Scramble */}
             {activity === 2 && v && (
               <div>
                 <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '25px', borderRadius: '15px', marginBottom: '25px', textAlign: 'center' }}>
@@ -1067,7 +1010,6 @@ if (screen === 'welcome') {
               </div>
             )}
 
-            {/* Activity 3: Fill in Blanks */}
             {activity === 3 && v && (
               <div>
                 <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', padding: '25px', borderRadius: '15px', marginBottom: '25px' }}>
@@ -1130,7 +1072,6 @@ if (screen === 'welcome') {
               </div>
             )}
 
-            {/* Activity 4: Quiz */}
             {activity === 4 && v && (
               <div>
                 <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '30px', borderRadius: '15px', marginBottom: '25px', textAlign: 'center' }}>
@@ -1164,10 +1105,6 @@ if (screen === 'welcome') {
     );
   }
 
-  // ============================================
-  // SCREEN: COMPLETION
-  // ============================================
-  
   if (screen === 'completion' && unit) {
     const finalAccuracy = Math.round((correct / 100) * 100);
     const congratsMsg = congratulationMessages[Math.floor(Math.random() * congratulationMessages.length)];
@@ -1178,49 +1115,39 @@ if (screen === 'welcome') {
       canvas.height = 800;
       const ctx = canvas.getContext('2d');
       
-      // Background
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, '#667eea');
       gradient.addColorStop(1, '#764ba2');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Border
       ctx.strokeStyle = 'white';
       ctx.lineWidth = 20;
       ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
       
-      // Title
       ctx.fillStyle = 'white';
       ctx.font = 'bold 70px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('🎓 Certificate of Achievement', canvas.width / 2, 150);
       
-      // Student name
       ctx.font = 'bold 50px Arial';
       ctx.fillText(student, canvas.width / 2, 250);
       
-      // Completion text
       ctx.font = '35px Arial';
       ctx.fillText('has successfully completed', canvas.width / 2, 320);
       
-      // Unit title
       ctx.font = 'bold 45px Arial';
       ctx.fillText(`${unit.emoji} ${unit.title}`, canvas.width / 2, 400);
       
-      // Stats
       ctx.font = '30px Arial';
       ctx.fillText(`Score: ${unitScore} | Accuracy: ${finalAccuracy}% | Stars: ${stars}`, canvas.width / 2, 500);
       
-      // Date
       ctx.font = '25px Arial';
       ctx.fillText(new Date().toLocaleDateString(), canvas.width / 2, 580);
       
-      // Words learned
       ctx.font = 'bold 28px Arial';
       ctx.fillText('✨ 100 New Words Mastered! ✨', canvas.width / 2, 660);
       
-      // Download
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1285,9 +1212,5 @@ if (screen === 'welcome') {
 
   return null;
 }
-
-// ============================================
-// EXPORT
-// ============================================
 
 export default App;
