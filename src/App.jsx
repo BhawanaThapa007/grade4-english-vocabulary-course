@@ -113,11 +113,6 @@ const vocabularyData = {
       { word: "transcript", definition: "An official academic record" }
     ]
   },
-// ============================================
-// UNITS 2, 3, 4 VOCABULARY DATA
-// ============================================
-// ADD THIS TO YOUR EXISTING vocabularyData OBJECT
-
   unit2: {
     multipleChoice: [
       { word: "family", definition: "A group of people related by blood or marriage" },
