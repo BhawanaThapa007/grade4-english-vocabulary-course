@@ -449,7 +449,7 @@ const vocabularyData = {
       { word: "diplomacy", definition: "Managing international relations" },
       { word: "sovereignty", definition: "Supreme power or authority" }
     ]
-  },
+  };
 const courseData = {
   units: [
     {
