@@ -506,9 +506,6 @@ const courseData = {
     }
   ]
 };
-```
-
-
 const welcomeMessages = [
   "Ready to expand your vocabulary today?",
   "Let's make learning an adventure!",
