@@ -338,7 +338,6 @@ const vocabularyData = {
       { word: "circulation", definition: "Continuous movement in a cycle" }
     ]
   },
-
   unit4: {
     multipleChoice: [
       { word: "community", definition: "A group of people living together" },
@@ -450,8 +449,7 @@ const vocabularyData = {
       { word: "diplomacy", definition: "Managing international relations" },
       { word: "sovereignty", definition: "Supreme power or authority" }
     ]
-  }
-
+  },
 const courseData = {
   units: [
     {
