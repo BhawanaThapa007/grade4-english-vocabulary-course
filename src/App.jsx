@@ -1214,8 +1214,6 @@ function App() {
 }
 
 export default App; 
-import React, { useState, useEffect } from 'react';
-
 const vocabularyData = {
   unit1: {
     multipleChoice: [
