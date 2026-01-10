@@ -606,6 +606,17 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  
+  // Resume functionality - track current position
+  const [currentUnitId, setCurrentUnitId] = useState(null);
+  const [currentActivity, setCurrentActivity] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [hasInProgressUnit, setHasInProgressUnit] = useState(false);
+  
+  // Resume functionality
+  const [inProgressUnit, setInProgressUnit] = useState(null);
+  const [inProgressActivity, setInProgressActivity] = useState(null);
+  const [inProgressQuestion, setInProgressQuestion] = useState(null);
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -633,6 +644,10 @@ function App() {
           questionsAnswered: 0,
           accuracyByActivity: {}
         });
+        // Load in-progress unit info
+        setInProgressUnit(data.inProgressUnit || null);
+        setInProgressActivity(data.inProgressActivity || null);
+        setInProgressQuestion(data.inProgressQuestion || null);
         console.log('✅ Progress loaded successfully!');
       } else {
         console.log('ℹ️ No saved data found. Starting fresh!');
@@ -653,6 +668,9 @@ function App() {
         detailedProgress,
         activityRecords,
         sessionStats,
+        inProgressUnit,
+        inProgressActivity,
+        inProgressQuestion,
         lastUpdated: new Date().toISOString()
       };
       console.log('💾 Saving progress for:', student);
@@ -660,7 +678,7 @@ function App() {
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
       console.log('✅ Progress saved successfully!');
     }
-  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats]);
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion]);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -709,13 +727,27 @@ function App() {
   };
 
   const startUnit = () => {
-    setActivity(0);
-    setQuestion(0);
-    setUnitScore(0);
-    setCorrect(0);
-    setStreak(0);
+    // Check if there's saved progress for this unit
+    if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
+      // Resume from where they left off
+      setActivity(inProgressActivity);
+      setQuestion(inProgressQuestion);
+      setUnitScore(0); // Keep their previous score
+      setCorrect(0);
+      setStreak(0);
+    } else {
+      // Start fresh
+      setActivity(0);
+      setQuestion(0);
+      setUnitScore(0);
+      setCorrect(0);
+      setStreak(0);
+    }
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
+    setInProgressUnit(unit.id);
+    setInProgressActivity(activity);
+    setInProgressQuestion(question);
     setScreen('activity');
   };
 
@@ -772,6 +804,7 @@ function App() {
       
       if (nextQuestionNum < currentVocabSet.length) {
         setQuestion(nextQuestionNum);
+        setInProgressQuestion(nextQuestionNum); // Save progress
       } else {
         nextActivity();
       }
@@ -810,10 +843,13 @@ function App() {
       
       setTimeout(() => {
         setShowActivityComplete(false);
-        setActivity(prev => prev + 1);
+        const nextAct = activity + 1;
+        setActivity(nextAct);
         setQuestion(0);
         setInput('');
         setActivityStartTime(Date.now());
+        setInProgressActivity(nextAct); // Save progress
+        setInProgressQuestion(0);
       }, 3500);
     } else {
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0;
@@ -848,6 +884,10 @@ function App() {
           setUnlocked(prev => [...prev, unit.id + 1]);
         }
       }
+      // Clear in-progress since unit is complete
+      setInProgressUnit(null);
+      setInProgressActivity(null);
+      setInProgressQuestion(null);
       setScreen('completion');
     }
   };
@@ -1373,21 +1413,25 @@ function App() {
             {courseData.units.map(u => {
               const isUnlocked = unlocked.includes(u.id);
               const isDone = completed.includes(u.id);
+              const isInProgress = inProgressUnit === u.id && !isDone;
 
               return (
-                <div key={u.id} onClick={() => selectUnit(u)} style={{ background: 'white', borderRadius: '22px', overflow: 'hidden', cursor: isUnlocked ? 'pointer' : 'not-allowed', boxShadow: '0 12px 30px rgba(0,0,0,0.18)', border: isDone ? '4px solid #10b981' : 'none', opacity: isUnlocked ? 1 : 0.6, transition: 'all 0.3s', position: 'relative', transform: isUnlocked ? 'scale(1)' : 'scale(0.98)' }}>
+                <div key={u.id} onClick={() => selectUnit(u)} style={{ background: 'white', borderRadius: '22px', overflow: 'hidden', cursor: isUnlocked ? 'pointer' : 'not-allowed', boxShadow: '0 12px 30px rgba(0,0,0,0.18)', border: isDone ? '4px solid #10b981' : isInProgress ? '4px solid #f59e0b' : 'none', opacity: isUnlocked ? 1 : 0.6, transition: 'all 0.3s', position: 'relative', transform: isUnlocked ? 'scale(1)' : 'scale(0.98)' }}>
                   {!isUnlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '60px', zIndex: 2 }}>🔒</div>}
                   
                   <div style={{ height: '145px', background: `linear-gradient(135deg, ${u.color} 0%, ${u.color}dd 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                     <div style={{ fontSize: '80px' }}>{u.emoji}</div>
                     <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: '10px', color: 'white', fontWeight: 'bold' }}>Unit {u.id}</div>
                     {isDone && <div style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '35px' }}>✅</div>}
+                    {isInProgress && <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#f59e0b', color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 'bold' }}>📍 Resume</div>}
                   </div>
                   
                   <div style={{ padding: '22px' }}>
                     <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>{u.title}</h3>
                     <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '15px' }}>{u.description}</p>
-                    <div style={{ fontSize: '13px', color: '#9ca3af', fontWeight: '600' }}>100 words • 5 activities</div>
+                    <div style={{ fontSize: '13px', color: '#9ca3af', fontWeight: '600' }}>
+                      {isInProgress ? `📍 In Progress - Activity ${inProgressActivity + 1}/5` : '100 words • 5 activities'}
+                    </div>
                   </div>
                 </div>
               );
@@ -1399,6 +1443,10 @@ function App() {
   }
 
   if (screen === 'unitIntro' && unit) {
+    const hasProgress = inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null;
+    const activityNames = ['Multiple Choice', 'Pronunciation', 'Word Scramble', 'Fill in the Blanks', 'Definition Quiz'];
+    const progressText = hasProgress ? `Activity ${inProgressActivity + 1}: ${activityNames[inProgressActivity]} - Question ${inProgressQuestion + 1}/20` : '';
+    
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ maxWidth: '700px', width: '100%', background: 'white', borderRadius: '30px', padding: '50px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
@@ -1409,6 +1457,22 @@ function App() {
           <p style={{ fontSize: '18px', color: '#6b7280', textAlign: 'center', marginBottom: '35px' }}>
             {unit.description}
           </p>
+
+          {hasProgress && (
+            <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '20px', padding: '20px', marginBottom: '25px', border: '3px solid #f59e0b' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '32px' }}>📍</span>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#78350f', marginBottom: '5px' }}>
+                    You have progress saved!
+                  </h3>
+                  <p style={{ fontSize: '14px', color: '#92400e' }}>
+                    {progressText}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', borderRadius: '20px', padding: '25px', marginBottom: '30px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>🎯 Learning Goals:</h3>
@@ -1463,11 +1527,31 @@ function App() {
             </div>
           </div>
 
-          <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
-            🚀 Start Learning!
-          </button>
+          {hasProgress ? (
+            <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
+              ▶️ Continue Where You Left Off
+            </button>
+          ) : (
+            <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
+              🚀 Start Learning!
+            </button>
+          )}
+
+          {hasProgress && (
+            <button
+              onClick={() => {
+                setInProgressUnit(null);
+                setInProgressActivity(null);
+                setInProgressQuestion(null);
+                startUnit();
+              }}
+              style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}
+            >
+              🔄 Start Over from Beginning
+            </button>
+          )}
           
-          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer', marginTop: '15px' }}>
+          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer' }}>
             ← Back to Home
           </button>
         </div>
