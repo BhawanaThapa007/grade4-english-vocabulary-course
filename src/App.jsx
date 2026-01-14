@@ -617,6 +617,9 @@ function App() {
   const [inProgressUnit, setInProgressUnit] = useState(null);
   const [inProgressActivity, setInProgressActivity] = useState(null);
   const [inProgressQuestion, setInProgressQuestion] = useState(null);
+  
+  // Question randomization - shuffle once per unit session
+  const [shuffledQuestions, setShuffledQuestions] = useState({});
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -648,6 +651,8 @@ function App() {
         setInProgressUnit(data.inProgressUnit || null);
         setInProgressActivity(data.inProgressActivity || null);
         setInProgressQuestion(data.inProgressQuestion || null);
+        // Load shuffled questions order
+        setShuffledQuestions(data.shuffledQuestions || {});
         console.log('✅ Progress loaded successfully!');
       } else {
         console.log('ℹ️ No saved data found. Starting fresh!');
@@ -671,6 +676,7 @@ function App() {
         inProgressUnit,
         inProgressActivity,
         inProgressQuestion,
+        shuffledQuestions, // Save shuffled order
         lastUpdated: new Date().toISOString()
       };
       console.log('💾 Saving progress for:', student);
@@ -678,7 +684,7 @@ function App() {
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
       console.log('✅ Progress saved successfully!');
     }
-  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion]);
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion, shuffledQuestions]);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -695,6 +701,15 @@ function App() {
     const unitData = vocabularyData[`unit${unit.id}`];
     if (!unitData) return [];
     
+    // Create a unique key for this unit+activity combo
+    const key = `unit${unit.id}_activity${activity}`;
+    
+    // If we have shuffled questions for this combo, use them
+    if (shuffledQuestions[key]) {
+      return shuffledQuestions[key];
+    }
+    
+    // Otherwise return the original (shouldn't happen if startUnit works correctly)
     switch(activity) {
       case 0: return unitData.multipleChoice;
       case 1: return unitData.pronunciation;
@@ -727,16 +742,33 @@ function App() {
   };
 
   const startUnit = () => {
+    let newActivity = 0;
+    let newQuestion = 0;
+    
     // Check if there's saved progress for this unit
     if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
       // Resume from where they left off
+      newActivity = inProgressActivity;
+      newQuestion = inProgressQuestion;
       setActivity(inProgressActivity);
       setQuestion(inProgressQuestion);
-      setUnitScore(0); // Keep their previous score
+      setUnitScore(0);
       setCorrect(0);
       setStreak(0);
     } else {
-      // Start fresh
+      // Start fresh - shuffle all questions for this unit session
+      const unitData = vocabularyData[`unit${unit.id}`];
+      if (unitData) {
+        const newShuffled = {
+          [`unit${unit.id}_activity0`]: shuffle(unitData.multipleChoice),
+          [`unit${unit.id}_activity1`]: shuffle(unitData.pronunciation),
+          [`unit${unit.id}_activity2`]: shuffle(unitData.scramble),
+          [`unit${unit.id}_activity3`]: shuffle(unitData.fillBlanks),
+          [`unit${unit.id}_activity4`]: shuffle(unitData.quiz)
+        };
+        setShuffledQuestions(newShuffled);
+      }
+      
       setActivity(0);
       setQuestion(0);
       setUnitScore(0);
@@ -746,8 +778,8 @@ function App() {
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
     setInProgressUnit(unit.id);
-    setInProgressActivity(activity);
-    setInProgressQuestion(question);
+    setInProgressActivity(newActivity); // ✅ Save the NEW value!
+    setInProgressQuestion(newQuestion); // ✅ Save the NEW value!
     setScreen('activity');
   };
 
