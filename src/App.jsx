@@ -742,20 +742,32 @@ function App() {
   };
 
   const startUnit = () => {
+    console.log('🚀 startUnit called');
+    console.log('📍 Current state - activity:', activity, 'question:', question);
+    console.log('💾 Saved progress - unit:', inProgressUnit, 'activity:', inProgressActivity, 'question:', inProgressQuestion);
+    console.log('🎯 Selected unit ID:', unit?.id);
+    
     let newActivity = 0;
     let newQuestion = 0;
     
     // Check if there's saved progress for this unit
     if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
       // Resume from where they left off
+      console.log('✅ RESUMING from saved position!');
       newActivity = inProgressActivity;
       newQuestion = inProgressQuestion;
+      console.log('📌 Will resume at Activity', newActivity, 'Question', newQuestion);
+      
       setActivity(inProgressActivity);
       setQuestion(inProgressQuestion);
       setUnitScore(0);
       setCorrect(0);
       setStreak(0);
+      
+      // Don't create new shuffled questions - we already have them from localStorage!
+      console.log('🔄 Using existing shuffled questions from localStorage');
     } else {
+      console.log('🆕 STARTING FRESH');
       // Start fresh - shuffle all questions for this unit session
       const unitData = vocabularyData[`unit${unit.id}`];
       if (unitData) {
@@ -767,20 +779,27 @@ function App() {
           [`unit${unit.id}_activity4`]: shuffle(unitData.quiz)
         };
         setShuffledQuestions(newShuffled);
+        console.log('🎲 Created new shuffled questions');
       }
       
+      newActivity = 0;
+      newQuestion = 0;
       setActivity(0);
       setQuestion(0);
       setUnitScore(0);
       setCorrect(0);
       setStreak(0);
     }
+    
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
     setInProgressUnit(unit.id);
-    setInProgressActivity(newActivity); // ✅ Save the NEW value!
-    setInProgressQuestion(newQuestion); // ✅ Save the NEW value!
+    setInProgressActivity(newActivity);
+    setInProgressQuestion(newQuestion);
     setScreen('activity');
+    
+    console.log('✅ startUnit complete - Set activity to:', newActivity, 'question to:', newQuestion);
+    console.log('📺 Changed screen to: activity');
   };
 
   const handleAnswer = (ans, correctAns, isText = false) => {
@@ -1137,6 +1156,37 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const deleteStudent = (studentName) => {
+    // Confirmation dialog
+    const confirmDelete = window.confirm(
+      `⚠️ DELETE STUDENT?\n\n` +
+      `Student: ${studentName}\n\n` +
+      `This will permanently delete ALL data for this student including:\n` +
+      `• All progress and scores\n` +
+      `• All activity records\n` +
+      `• All answers and response times\n\n` +
+      `This action CANNOT be undone!\n\n` +
+      `Are you sure you want to delete this student?`
+    );
+
+    if (confirmDelete) {
+      // Delete from localStorage
+      const key = `englishAdventure_${studentName}`;
+      localStorage.removeItem(key);
+      
+      // Show success message
+      alert(`✅ Student "${studentName}" has been deleted successfully.`);
+      
+      // Force re-render by changing a state
+      // This will cause getAllStudents() to be called again
+      setSelectedStudent(null);
+      
+      console.log(`🗑️ Deleted student: ${studentName}`);
+    } else {
+      console.log(`❌ Delete cancelled for: ${studentName}`);
+    }
+  };
+
   // Admin Dashboard Screen
   if (screen === 'admin' && isAdmin) {
     const allStudents = getAllStudents();
@@ -1201,12 +1251,14 @@ function App() {
                 allStudents.map((s, idx) => (
                   <div
                     key={idx}
-                    onClick={() => setSelectedStudent(s)}
-                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#667eea'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    <div>
+                    <div 
+                      onClick={() => setSelectedStudent(s)}
+                      style={{ flex: 1, cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'}
+                      onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = '#e5e7eb'}
+                    >
                       <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
                         {s.student || s.name}
                       </h3>
@@ -1217,7 +1269,37 @@ function App() {
                         <span>📝 {s.activityRecords ? s.activityRecords.length : 0} answers</span>
                       </div>
                     </div>
-                    <div style={{ fontSize: '24px', color: '#667eea' }}>→</div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteStudent(s.student || s.name);
+                        }}
+                        style={{ 
+                          padding: '8px 16px', 
+                          fontSize: '14px', 
+                          fontWeight: 'bold', 
+                          color: 'white', 
+                          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}
+                      >
+                        🗑️ Delete
+                      </button>
+                      <div 
+                        onClick={() => setSelectedStudent(s)}
+                        style={{ fontSize: '24px', color: '#667eea', cursor: 'pointer' }}
+                      >
+                        →
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
