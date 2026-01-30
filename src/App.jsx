@@ -601,25 +601,6 @@ function App() {
     questionsAnswered: 0,
     accuracyByActivity: {}
   });
-  
-  // Admin Dashboard States
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  
-  // Resume functionality - track current position
-  const [currentUnitId, setCurrentUnitId] = useState(null);
-  const [currentActivity, setCurrentActivity] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [hasInProgressUnit, setHasInProgressUnit] = useState(false);
-  
-  // Resume functionality
-  const [inProgressUnit, setInProgressUnit] = useState(null);
-  const [inProgressActivity, setInProgressActivity] = useState(null);
-  const [inProgressQuestion, setInProgressQuestion] = useState(null);
-  
-  // Question randomization - shuffle once per unit session
-  const [shuffledQuestions, setShuffledQuestions] = useState({});
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -647,12 +628,6 @@ function App() {
           questionsAnswered: 0,
           accuracyByActivity: {}
         });
-        // Load in-progress unit info
-        setInProgressUnit(data.inProgressUnit || null);
-        setInProgressActivity(data.inProgressActivity || null);
-        setInProgressQuestion(data.inProgressQuestion || null);
-        // Load shuffled questions order
-        setShuffledQuestions(data.shuffledQuestions || {});
         console.log('✅ Progress loaded successfully!');
       } else {
         console.log('ℹ️ No saved data found. Starting fresh!');
@@ -673,10 +648,6 @@ function App() {
         detailedProgress,
         activityRecords,
         sessionStats,
-        inProgressUnit,
-        inProgressActivity,
-        inProgressQuestion,
-        shuffledQuestions, // Save shuffled order
         lastUpdated: new Date().toISOString()
       };
       console.log('💾 Saving progress for:', student);
@@ -684,7 +655,7 @@ function App() {
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
       console.log('✅ Progress saved successfully!');
     }
-  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion, shuffledQuestions]);
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats]);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -701,15 +672,6 @@ function App() {
     const unitData = vocabularyData[`unit${unit.id}`];
     if (!unitData) return [];
     
-    // Create a unique key for this unit+activity combo
-    const key = `unit${unit.id}_activity${activity}`;
-    
-    // If we have shuffled questions for this combo, use them
-    if (shuffledQuestions[key]) {
-      return shuffledQuestions[key];
-    }
-    
-    // Otherwise return the original (shouldn't happen if startUnit works correctly)
     switch(activity) {
       case 0: return unitData.multipleChoice;
       case 1: return unitData.pronunciation;
@@ -742,64 +704,14 @@ function App() {
   };
 
   const startUnit = () => {
-    console.log('🚀 startUnit called');
-    console.log('📍 Current state - activity:', activity, 'question:', question);
-    console.log('💾 Saved progress - unit:', inProgressUnit, 'activity:', inProgressActivity, 'question:', inProgressQuestion);
-    console.log('🎯 Selected unit ID:', unit?.id);
-    
-    let newActivity = 0;
-    let newQuestion = 0;
-    
-    // Check if there's saved progress for this unit
-    if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
-      // Resume from where they left off
-      console.log('✅ RESUMING from saved position!');
-      newActivity = inProgressActivity;
-      newQuestion = inProgressQuestion;
-      console.log('📌 Will resume at Activity', newActivity, 'Question', newQuestion);
-      
-      setActivity(inProgressActivity);
-      setQuestion(inProgressQuestion);
-      setUnitScore(0);
-      setCorrect(0);
-      setStreak(0);
-      
-      // Don't create new shuffled questions - we already have them from localStorage!
-      console.log('🔄 Using existing shuffled questions from localStorage');
-    } else {
-      console.log('🆕 STARTING FRESH');
-      // Start fresh - shuffle all questions for this unit session
-      const unitData = vocabularyData[`unit${unit.id}`];
-      if (unitData) {
-        const newShuffled = {
-          [`unit${unit.id}_activity0`]: shuffle(unitData.multipleChoice),
-          [`unit${unit.id}_activity1`]: shuffle(unitData.pronunciation),
-          [`unit${unit.id}_activity2`]: shuffle(unitData.scramble),
-          [`unit${unit.id}_activity3`]: shuffle(unitData.fillBlanks),
-          [`unit${unit.id}_activity4`]: shuffle(unitData.quiz)
-        };
-        setShuffledQuestions(newShuffled);
-        console.log('🎲 Created new shuffled questions');
-      }
-      
-      newActivity = 0;
-      newQuestion = 0;
-      setActivity(0);
-      setQuestion(0);
-      setUnitScore(0);
-      setCorrect(0);
-      setStreak(0);
-    }
-    
+    setActivity(0);
+    setQuestion(0);
+    setUnitScore(0);
+    setCorrect(0);
+    setStreak(0);
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
-    setInProgressUnit(unit.id);
-    setInProgressActivity(newActivity);
-    setInProgressQuestion(newQuestion);
     setScreen('activity');
-    
-    console.log('✅ startUnit complete - Set activity to:', newActivity, 'question to:', newQuestion);
-    console.log('📺 Changed screen to: activity');
   };
 
   const handleAnswer = (ans, correctAns, isText = false) => {
@@ -855,7 +767,6 @@ function App() {
       
       if (nextQuestionNum < currentVocabSet.length) {
         setQuestion(nextQuestionNum);
-        setInProgressQuestion(nextQuestionNum); // Save progress
       } else {
         nextActivity();
       }
@@ -894,13 +805,10 @@ function App() {
       
       setTimeout(() => {
         setShowActivityComplete(false);
-        const nextAct = activity + 1;
-        setActivity(nextAct);
+        setActivity(prev => prev + 1);
         setQuestion(0);
         setInput('');
         setActivityStartTime(Date.now());
-        setInProgressActivity(nextAct); // Save progress
-        setInProgressQuestion(0);
       }, 3500);
     } else {
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0;
@@ -935,10 +843,6 @@ function App() {
           setUnlocked(prev => [...prev, unit.id + 1]);
         }
       }
-      // Clear in-progress since unit is complete
-      setInProgressUnit(null);
-      setInProgressActivity(null);
-      setInProgressQuestion(null);
       setScreen('completion');
     }
   };
@@ -1022,349 +926,6 @@ function App() {
     });
   };
 
-  const exportResearchData = () => {
-    // CSV Headers
-    const headers = [
-      'Student Name',
-      'Unit ID',
-      'Unit Title',
-      'Activity Number',
-      'Activity Name',
-      'Question Number',
-      'Correct Answer',
-      'Student Answer',
-      'Is Correct',
-      'Response Time (seconds)',
-      'Timestamp'
-    ];
-
-    // Convert activity records to CSV rows
-    const rows = activityRecords.map(record => [
-      record.student,
-      record.unitId,
-      record.unitTitle,
-      record.activity,
-      record.activityName,
-      record.questionNumber,
-      `"${record.correctAnswer}"`, // Quotes to handle commas in answers
-      `"${record.studentAnswer}"`,
-      record.isCorrect ? 'TRUE' : 'FALSE',
-      record.responseTime,
-      record.timestamp
-    ]);
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    // Create and download CSV file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${student.replace(/\s+/g, '_')}_Research_Data_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Admin Functions
-  const handleAdminLogin = () => {
-    if (adminPassword === 'research2026') { // Simple password - change this!
-      setIsAdmin(true);
-      setScreen('admin');
-    } else {
-      alert('❌ Incorrect password!');
-    }
-  };
-
-  const getAllStudents = () => {
-    const students = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('englishAdventure_')) {
-        const studentName = key.replace('englishAdventure_', '');
-        const data = JSON.parse(localStorage.getItem(key));
-        students.push({
-          name: studentName,
-          ...data
-        });
-      }
-    }
-    return students.sort((a, b) => (b.score || 0) - (a.score || 0));
-  };
-
-  const exportAllStudentsData = () => {
-    const allStudents = getAllStudents();
-    const headers = [
-      'Student Name',
-      'Total Score',
-      'Total Stars',
-      'Units Completed',
-      'Best Streak',
-      'Hints Remaining',
-      'Unit ID',
-      'Unit Title',
-      'Activity Number',
-      'Activity Name',
-      'Question Number',
-      'Correct Answer',
-      'Student Answer',
-      'Is Correct',
-      'Response Time (seconds)',
-      'Timestamp'
-    ];
-
-    const rows = [];
-    allStudents.forEach(student => {
-      if (student.activityRecords && student.activityRecords.length > 0) {
-        student.activityRecords.forEach(record => {
-          rows.push([
-            student.student || student.name,
-            student.score || 0,
-            student.stars || 0,
-            student.completed ? student.completed.length : 0,
-            student.maxStreak || 0,
-            student.hints !== undefined ? student.hints : 5,
-            record.unitId,
-            record.unitTitle,
-            record.activity,
-            record.activityName,
-            record.questionNumber,
-            `"${record.correctAnswer}"`,
-            `"${record.studentAnswer}"`,
-            record.isCorrect ? 'TRUE' : 'FALSE',
-            record.responseTime,
-            record.timestamp
-          ]);
-        });
-      }
-    });
-
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ALL_STUDENTS_Research_Data_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const deleteStudent = (studentName) => {
-    // Confirmation dialog
-    const confirmDelete = window.confirm(
-      `⚠️ DELETE STUDENT?\n\n` +
-      `Student: ${studentName}\n\n` +
-      `This will permanently delete ALL data for this student including:\n` +
-      `• All progress and scores\n` +
-      `• All activity records\n` +
-      `• All answers and response times\n\n` +
-      `This action CANNOT be undone!\n\n` +
-      `Are you sure you want to delete this student?`
-    );
-
-    if (confirmDelete) {
-      // Delete from localStorage
-      const key = `englishAdventure_${studentName}`;
-      localStorage.removeItem(key);
-      
-      // Show success message
-      alert(`✅ Student "${studentName}" has been deleted successfully.`);
-      
-      // Force re-render by changing a state
-      // This will cause getAllStudents() to be called again
-      setSelectedStudent(null);
-      
-      console.log(`🗑️ Deleted student: ${studentName}`);
-    } else {
-      console.log(`❌ Delete cancelled for: ${studentName}`);
-    }
-  };
-
-  // Admin Dashboard Screen
-  if (screen === 'admin' && isAdmin) {
-    const allStudents = getAllStudents();
-    const totalStudents = allStudents.length;
-    const totalQuestionsAnswered = allStudents.reduce((sum, s) => sum + (s.sessionStats?.questionsAnswered || 0), 0);
-    const avgCompletionRate = totalStudents > 0 ? Math.round(allStudents.reduce((sum, s) => sum + (s.completed?.length || 0), 0) / totalStudents * 25) : 0;
-
-    return (
-      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '20px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ background: 'white', borderRadius: '25px', padding: '35px', marginBottom: '25px', boxShadow: '0 15px 40px rgba(0,0,0,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-              <div>
-                <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>
-                  🔐 Admin Dashboard
-                </h1>
-                <p style={{ fontSize: '18px', color: '#6b7280' }}>
-                  Research Data & Student Analytics
-                </p>
-              </div>
-              <button onClick={() => { setIsAdmin(false); setScreen('welcome'); }} style={{ padding: '12px 25px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '12px', cursor: 'pointer' }}>
-                ← Exit Admin
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-              <div style={{ background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
-                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{totalStudents}</div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Total Students</div>
-              </div>
-              <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
-                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{totalQuestionsAnswered}</div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Questions Answered</div>
-              </div>
-              <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
-                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{avgCompletionRate}%</div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Avg Completion</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '25px' }}>
-              <button onClick={exportAllStudentsData} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}>
-                📥 Export All Students Data (CSV)
-              </button>
-            </div>
-
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
-              📊 All Students
-            </h2>
-
-            <div style={{ display: 'grid', gap: '15px' }}>
-              {allStudents.length === 0 ? (
-                <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '40px', borderRadius: '18px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '18px', color: '#78350f', fontWeight: 'bold' }}>
-                    No student data yet!
-                  </p>
-                  <p style={{ fontSize: '14px', color: '#92400e', marginTop: '10px' }}>
-                    Students will appear here after they start using the app.
-                  </p>
-                </div>
-              ) : (
-                allStudents.map((s, idx) => (
-                  <div
-                    key={idx}
-                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <div 
-                      onClick={() => setSelectedStudent(s)}
-                      style={{ flex: 1, cursor: 'pointer' }}
-                      onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'}
-                      onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = '#e5e7eb'}
-                    >
-                      <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
-                        {s.student || s.name}
-                      </h3>
-                      <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: '#6b7280' }}>
-                        <span>⭐ {s.stars || 0} stars</span>
-                        <span>🏆 {s.score || 0} points</span>
-                        <span>📚 {s.completed ? s.completed.length : 0}/4 units</span>
-                        <span>📝 {s.activityRecords ? s.activityRecords.length : 0} answers</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteStudent(s.student || s.name);
-                        }}
-                        style={{ 
-                          padding: '8px 16px', 
-                          fontSize: '14px', 
-                          fontWeight: 'bold', 
-                          color: 'white', 
-                          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
-                          border: 'none', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '5px'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}
-                      >
-                        🗑️ Delete
-                      </button>
-                      <div 
-                        onClick={() => setSelectedStudent(s)}
-                        style={{ fontSize: '24px', color: '#667eea', cursor: 'pointer' }}
-                      >
-                        →
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {selectedStudent && (
-              <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-                <div style={{ background: 'white', borderRadius: '25px', padding: '40px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                    <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1f2937' }}>
-                      {selectedStudent.student || selectedStudent.name}
-                    </h2>
-                    <button onClick={() => setSelectedStudent(null)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', fontSize: '20px', cursor: 'pointer' }}>
-                      ✕
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
-                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.score || 0}</div>
-                      <div style={{ fontSize: '14px' }}>Total Score</div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
-                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.stars || 0}</div>
-                      <div style={{ fontSize: '14px' }}>Total Stars</div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
-                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.completed ? selectedStudent.completed.length : 0}/4</div>
-                      <div style={{ fontSize: '14px' }}>Units Done</div>
-                    </div>
-                  </div>
-
-                  <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>
-                    Recent Activity
-                  </h3>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto', background: '#f9fafb', borderRadius: '15px', padding: '15px' }}>
-                    {selectedStudent.activityRecords && selectedStudent.activityRecords.length > 0 ? (
-                      selectedStudent.activityRecords.slice(-10).reverse().map((record, idx) => (
-                        <div key={idx} style={{ background: 'white', padding: '12px', borderRadius: '10px', marginBottom: '10px', fontSize: '14px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                            <span style={{ fontWeight: 'bold', color: '#1f2937' }}>
-                              {record.unitTitle} - {record.activityName}
-                            </span>
-                            <span style={{ color: record.isCorrect ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
-                              {record.isCorrect ? '✓ Correct' : '✗ Wrong'}
-                            </span>
-                          </div>
-                          <div style={{ color: '#6b7280', fontSize: '12px' }}>
-                            Q{record.questionNumber}: {record.correctAnswer} | {record.responseTime}s
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p style={{ textAlign: 'center', color: '#6b7280', padding: '20px' }}>No activity yet</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (screen === 'welcome') {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -1391,24 +952,9 @@ function App() {
             style={{ width: '100%', padding: '16px 20px', fontSize: '18px', borderRadius: '15px', border: '3px solid #e5e7eb', outline: 'none', marginBottom: '20px' }}
           />
 
-          <button onClick={handleStart} disabled={!nameInput.trim()} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db', border: 'none', borderRadius: '15px', cursor: nameInput.trim() ? 'pointer' : 'not-allowed', marginBottom: '15px' }}>
+          <button onClick={handleStart} disabled={!nameInput.trim()} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db', border: 'none', borderRadius: '15px', cursor: nameInput.trim() ? 'pointer' : 'not-allowed' }}>
             🚀 Start Adventure!
           </button>
-
-          <div style={{ textAlign: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
-            <button
-              onClick={() => {
-                const pass = prompt('Enter admin password:');
-                if (pass) {
-                  setAdminPassword(pass);
-                  handleAdminLogin();
-                }
-              }}
-              style={{ padding: '12px 25px', fontSize: '14px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '12px', cursor: 'pointer' }}
-            >
-              🔐 Admin Access
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -1458,18 +1004,11 @@ function App() {
               </div>
             </div>
 
-            {(completed.length > 0 || activityRecords.length > 0) && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
-                {completed.length > 0 && (
-                  <button onClick={downloadProgressReport} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
-                    📊 Download Progress Report
-                  </button>
-                )}
-                {activityRecords.length > 0 && (
-                  <button onClick={exportResearchData} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}>
-                    📁 Export Research Data (CSV)
-                  </button>
-                )}
+            {completed.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
+                <button onClick={downloadProgressReport} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                  📊 Download Progress Report
+                </button>
               </div>
             )}
 
@@ -1527,25 +1066,21 @@ function App() {
             {courseData.units.map(u => {
               const isUnlocked = unlocked.includes(u.id);
               const isDone = completed.includes(u.id);
-              const isInProgress = inProgressUnit === u.id && !isDone;
 
               return (
-                <div key={u.id} onClick={() => selectUnit(u)} style={{ background: 'white', borderRadius: '22px', overflow: 'hidden', cursor: isUnlocked ? 'pointer' : 'not-allowed', boxShadow: '0 12px 30px rgba(0,0,0,0.18)', border: isDone ? '4px solid #10b981' : isInProgress ? '4px solid #f59e0b' : 'none', opacity: isUnlocked ? 1 : 0.6, transition: 'all 0.3s', position: 'relative', transform: isUnlocked ? 'scale(1)' : 'scale(0.98)' }}>
+                <div key={u.id} onClick={() => selectUnit(u)} style={{ background: 'white', borderRadius: '22px', overflow: 'hidden', cursor: isUnlocked ? 'pointer' : 'not-allowed', boxShadow: '0 12px 30px rgba(0,0,0,0.18)', border: isDone ? '4px solid #10b981' : 'none', opacity: isUnlocked ? 1 : 0.6, transition: 'all 0.3s', position: 'relative', transform: isUnlocked ? 'scale(1)' : 'scale(0.98)' }}>
                   {!isUnlocked && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '60px', zIndex: 2 }}>🔒</div>}
                   
                   <div style={{ height: '145px', background: `linear-gradient(135deg, ${u.color} 0%, ${u.color}dd 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                     <div style={{ fontSize: '80px' }}>{u.emoji}</div>
                     <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(255,255,255,0.25)', padding: '6px 14px', borderRadius: '10px', color: 'white', fontWeight: 'bold' }}>Unit {u.id}</div>
                     {isDone && <div style={{ position: 'absolute', top: '12px', right: '12px', fontSize: '35px' }}>✅</div>}
-                    {isInProgress && <div style={{ position: 'absolute', top: '12px', right: '12px', background: '#f59e0b', color: 'white', padding: '6px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 'bold' }}>📍 Resume</div>}
                   </div>
                   
                   <div style={{ padding: '22px' }}>
                     <h3 style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>{u.title}</h3>
                     <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '15px' }}>{u.description}</p>
-                    <div style={{ fontSize: '13px', color: '#9ca3af', fontWeight: '600' }}>
-                      {isInProgress ? `📍 In Progress - Activity ${inProgressActivity + 1}/5` : '100 words • 5 activities'}
-                    </div>
+                    <div style={{ fontSize: '13px', color: '#9ca3af', fontWeight: '600' }}>100 words • 5 activities</div>
                   </div>
                 </div>
               );
@@ -1557,10 +1092,6 @@ function App() {
   }
 
   if (screen === 'unitIntro' && unit) {
-    const hasProgress = inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null;
-    const activityNames = ['Multiple Choice', 'Pronunciation', 'Word Scramble', 'Fill in the Blanks', 'Definition Quiz'];
-    const progressText = hasProgress ? `Activity ${inProgressActivity + 1}: ${activityNames[inProgressActivity]} - Question ${inProgressQuestion + 1}/20` : '';
-    
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div style={{ maxWidth: '700px', width: '100%', background: 'white', borderRadius: '30px', padding: '50px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
@@ -1571,22 +1102,6 @@ function App() {
           <p style={{ fontSize: '18px', color: '#6b7280', textAlign: 'center', marginBottom: '35px' }}>
             {unit.description}
           </p>
-
-          {hasProgress && (
-            <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '20px', padding: '20px', marginBottom: '25px', border: '3px solid #f59e0b' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' }}>
-                <span style={{ fontSize: '32px' }}>📍</span>
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#78350f', marginBottom: '5px' }}>
-                    You have progress saved!
-                  </h3>
-                  <p style={{ fontSize: '14px', color: '#92400e' }}>
-                    {progressText}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           <div style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%)', borderRadius: '20px', padding: '25px', marginBottom: '30px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>🎯 Learning Goals:</h3>
@@ -1641,31 +1156,11 @@ function App() {
             </div>
           </div>
 
-          {hasProgress ? (
-            <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
-              ▶️ Continue Where You Left Off
-            </button>
-          ) : (
-            <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
-              🚀 Start Learning!
-            </button>
-          )}
-
-          {hasProgress && (
-            <button
-              onClick={() => {
-                setInProgressUnit(null);
-                setInProgressActivity(null);
-                setInProgressQuestion(null);
-                startUnit();
-              }}
-              style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}
-            >
-              🔄 Start Over from Beginning
-            </button>
-          )}
+          <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
+            🚀 Start Learning!
+          </button>
           
-          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer' }}>
+          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer', marginTop: '15px' }}>
             ← Back to Home
           </button>
         </div>
