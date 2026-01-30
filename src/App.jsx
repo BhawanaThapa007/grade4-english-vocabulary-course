@@ -589,8 +589,7 @@ function App() {
   const [unitScore, setUnitScore] = useState(0);
   const [showActivityComplete, setShowActivityComplete] = useState(false);
   const [activityFeedback, setActivityFeedback] = useState({ message: '', emoji: '', score: 0 });
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [startTime, setStartTime] = useState(null);
+  const [leaderboard] = useState([]);
   const [unitStartTime, setUnitStartTime] = useState(null);
   const [activityStartTime, setActivityStartTime] = useState(null);
   const [detailedProgress, setDetailedProgress] = useState({});
