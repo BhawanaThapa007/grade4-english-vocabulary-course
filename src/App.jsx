@@ -600,6 +600,11 @@ function App() {
     questionsAnswered: 0,
     accuracyByActivity: {}
   });
+  
+  // Admin Dashboard States
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -925,6 +930,286 @@ function App() {
     });
   };
 
+  const exportResearchData = () => {
+    // CSV Headers
+    const headers = [
+      'Student Name',
+      'Unit ID',
+      'Unit Title',
+      'Activity Number',
+      'Activity Name',
+      'Question Number',
+      'Correct Answer',
+      'Student Answer',
+      'Is Correct',
+      'Response Time (seconds)',
+      'Timestamp'
+    ];
+
+    // Convert activity records to CSV rows
+    const rows = activityRecords.map(record => [
+      record.student,
+      record.unitId,
+      record.unitTitle,
+      record.activity,
+      record.activityName,
+      record.questionNumber,
+      `"${record.correctAnswer}"`, // Quotes to handle commas in answers
+      `"${record.studentAnswer}"`,
+      record.isCorrect ? 'TRUE' : 'FALSE',
+      record.responseTime,
+      record.timestamp
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create and download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${student.replace(/\s+/g, '_')}_Research_Data_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Admin Functions
+  const handleAdminLogin = () => {
+    if (adminPassword === 'research2026') { // Simple password - change this!
+      setIsAdmin(true);
+      setScreen('admin');
+    } else {
+      alert('❌ Incorrect password!');
+    }
+  };
+
+  const getAllStudents = () => {
+    const students = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('englishAdventure_')) {
+        const studentName = key.replace('englishAdventure_', '');
+        const data = JSON.parse(localStorage.getItem(key));
+        students.push({
+          name: studentName,
+          ...data
+        });
+      }
+    }
+    return students.sort((a, b) => (b.score || 0) - (a.score || 0));
+  };
+
+  const exportAllStudentsData = () => {
+    const allStudents = getAllStudents();
+    const headers = [
+      'Student Name',
+      'Total Score',
+      'Total Stars',
+      'Units Completed',
+      'Best Streak',
+      'Hints Remaining',
+      'Unit ID',
+      'Unit Title',
+      'Activity Number',
+      'Activity Name',
+      'Question Number',
+      'Correct Answer',
+      'Student Answer',
+      'Is Correct',
+      'Response Time (seconds)',
+      'Timestamp'
+    ];
+
+    const rows = [];
+    allStudents.forEach(student => {
+      if (student.activityRecords && student.activityRecords.length > 0) {
+        student.activityRecords.forEach(record => {
+          rows.push([
+            student.student || student.name,
+            student.score || 0,
+            student.stars || 0,
+            student.completed ? student.completed.length : 0,
+            student.maxStreak || 0,
+            student.hints !== undefined ? student.hints : 5,
+            record.unitId,
+            record.unitTitle,
+            record.activity,
+            record.activityName,
+            record.questionNumber,
+            `"${record.correctAnswer}"`,
+            `"${record.studentAnswer}"`,
+            record.isCorrect ? 'TRUE' : 'FALSE',
+            record.responseTime,
+            record.timestamp
+          ]);
+        });
+      }
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ALL_STUDENTS_Research_Data_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Admin Dashboard Screen
+  if (screen === 'admin' && isAdmin) {
+    const allStudents = getAllStudents();
+    const totalStudents = allStudents.length;
+    const totalQuestionsAnswered = allStudents.reduce((sum, s) => sum + (s.sessionStats?.questionsAnswered || 0), 0);
+    const avgCompletionRate = totalStudents > 0 ? Math.round(allStudents.reduce((sum, s) => sum + (s.completed?.length || 0), 0) / totalStudents * 25) : 0;
+
+    return (
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '20px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ background: 'white', borderRadius: '25px', padding: '35px', marginBottom: '25px', boxShadow: '0 15px 40px rgba(0,0,0,0.25)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+              <div>
+                <h1 style={{ fontSize: '36px', fontWeight: 'bold', color: '#1f2937', marginBottom: '10px' }}>
+                  🔐 Admin Dashboard
+                </h1>
+                <p style={{ fontSize: '18px', color: '#6b7280' }}>
+                  Research Data & Student Analytics
+                </p>
+              </div>
+              <button onClick={() => { setIsAdmin(false); setScreen('welcome'); }} style={{ padding: '12px 25px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '12px', cursor: 'pointer' }}>
+                ← Exit Admin
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+              <div style={{ background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
+                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{totalStudents}</div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>Total Students</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
+                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{totalQuestionsAnswered}</div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>Questions Answered</div>
+              </div>
+              <div style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', padding: '25px', borderRadius: '18px', color: 'white' }}>
+                <div style={{ fontSize: '42px', fontWeight: 'bold', marginBottom: '8px' }}>{avgCompletionRate}%</div>
+                <div style={{ fontSize: '16px', fontWeight: '600' }}>Avg Completion</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '25px' }}>
+              <button onClick={exportAllStudentsData} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}>
+                📥 Export All Students Data (CSV)
+              </button>
+            </div>
+
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
+              📊 All Students
+            </h2>
+
+            <div style={{ display: 'grid', gap: '15px' }}>
+              {allStudents.length === 0 ? (
+                <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', padding: '40px', borderRadius: '18px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '18px', color: '#78350f', fontWeight: 'bold' }}>
+                    No student data yet!
+                  </p>
+                  <p style={{ fontSize: '14px', color: '#92400e', marginTop: '10px' }}>
+                    Students will appear here after they start using the app.
+                  </p>
+                </div>
+              ) : (
+                allStudents.map((s, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedStudent(s)}
+                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#667eea'}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                  >
+                    <div>
+                      <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
+                        {s.student || s.name}
+                      </h3>
+                      <div style={{ display: 'flex', gap: '20px', fontSize: '14px', color: '#6b7280' }}>
+                        <span>⭐ {s.stars || 0} stars</span>
+                        <span>🏆 {s.score || 0} points</span>
+                        <span>📚 {s.completed ? s.completed.length : 0}/4 units</span>
+                        <span>📝 {s.activityRecords ? s.activityRecords.length : 0} answers</span>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '24px', color: '#667eea' }}>→</div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {selectedStudent && (
+              <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+                <div style={{ background: 'white', borderRadius: '25px', padding: '40px', maxWidth: '800px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                    <h2 style={{ fontSize: '28px', fontWeight: 'bold', color: '#1f2937' }}>
+                      {selectedStudent.student || selectedStudent.name}
+                    </h2>
+                    <button onClick={() => setSelectedStudent(null)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', fontSize: '20px', cursor: 'pointer' }}>
+                      ✕
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '25px' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.score || 0}</div>
+                      <div style={{ fontSize: '14px' }}>Total Score</div>
+                    </div>
+                    <div style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.stars || 0}</div>
+                      <div style={{ fontSize: '14px' }}>Total Stars</div>
+                    </div>
+                    <div style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', padding: '20px', borderRadius: '15px', color: 'white', textAlign: 'center' }}>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{selectedStudent.completed ? selectedStudent.completed.length : 0}/4</div>
+                      <div style={{ fontSize: '14px' }}>Units Done</div>
+                    </div>
+                  </div>
+
+                  <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '15px' }}>
+                    Recent Activity
+                  </h3>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', background: '#f9fafb', borderRadius: '15px', padding: '15px' }}>
+                    {selectedStudent.activityRecords && selectedStudent.activityRecords.length > 0 ? (
+                      selectedStudent.activityRecords.slice(-10).reverse().map((record, idx) => (
+                        <div key={idx} style={{ background: 'white', padding: '12px', borderRadius: '10px', marginBottom: '10px', fontSize: '14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <span style={{ fontWeight: 'bold', color: '#1f2937' }}>
+                              {record.unitTitle} - {record.activityName}
+                            </span>
+                            <span style={{ color: record.isCorrect ? '#10b981' : '#ef4444', fontWeight: 'bold' }}>
+                              {record.isCorrect ? '✓ Correct' : '✗ Wrong'}
+                            </span>
+                          </div>
+                          <div style={{ color: '#6b7280', fontSize: '12px' }}>
+                            Q{record.questionNumber}: {record.correctAnswer} | {record.responseTime}s
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p style={{ textAlign: 'center', color: '#6b7280', padding: '20px' }}>No activity yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === 'welcome') {
     return (
       <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
@@ -951,9 +1236,24 @@ function App() {
             style={{ width: '100%', padding: '16px 20px', fontSize: '18px', borderRadius: '15px', border: '3px solid #e5e7eb', outline: 'none', marginBottom: '20px' }}
           />
 
-          <button onClick={handleStart} disabled={!nameInput.trim()} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db', border: 'none', borderRadius: '15px', cursor: nameInput.trim() ? 'pointer' : 'not-allowed' }}>
+          <button onClick={handleStart} disabled={!nameInput.trim()} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: nameInput.trim() ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#d1d5db', border: 'none', borderRadius: '15px', cursor: nameInput.trim() ? 'pointer' : 'not-allowed', marginBottom: '15px' }}>
             🚀 Start Adventure!
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e5e7eb' }}>
+            <button
+              onClick={() => {
+                const pass = prompt('Enter admin password:');
+                if (pass) {
+                  setAdminPassword(pass);
+                  handleAdminLogin();
+                }
+              }}
+              style={{ padding: '12px 25px', fontSize: '14px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '12px', cursor: 'pointer' }}
+            >
+              🔐 Admin Access
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -1003,11 +1303,18 @@ function App() {
               </div>
             </div>
 
-            {completed.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px' }}>
-                <button onClick={downloadProgressReport} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
-                  📊 Download Progress Report
-                </button>
+            {(completed.length > 0 || activityRecords.length > 0) && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
+                {completed.length > 0 && (
+                  <button onClick={downloadProgressReport} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                    📊 Download Progress Report
+                  </button>
+                )}
+                {activityRecords.length > 0 && (
+                  <button onClick={exportResearchData} style={{ padding: '15px 35px', fontSize: '16px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)' }}>
+                    📁 Export Research Data (CSV)
+                  </button>
+                )}
               </div>
             )}
 
