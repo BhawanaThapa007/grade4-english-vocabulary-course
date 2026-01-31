@@ -638,6 +638,10 @@ function App() {
           accuracyByActivity: {}
         });
         // Load resume progress
+        console.log('📥 Loading resume progress from localStorage...');
+        console.log('  - inProgressUnit:', data.inProgressUnit);
+        console.log('  - inProgressActivity:', data.inProgressActivity);
+        console.log('  - inProgressQuestion:', data.inProgressQuestion);
         setInProgressUnit(data.inProgressUnit || null);
         setInProgressActivity(data.inProgressActivity || null);
         setInProgressQuestion(data.inProgressQuestion || null);
@@ -720,13 +724,21 @@ function App() {
   };
 
   const startUnit = () => {
+    console.log('🚀 startUnit called');
+    console.log('📍 Current inProgressUnit:', inProgressUnit);
+    console.log('📍 Current inProgressActivity:', inProgressActivity);
+    console.log('📍 Current inProgressQuestion:', inProgressQuestion);
+    console.log('📍 Selected unit.id:', unit.id);
+    
     // Check if resuming
     if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
       // Resume from saved position
+      console.log('✅ RESUMING from saved position!');
       setActivity(inProgressActivity);
       setQuestion(inProgressQuestion);
     } else {
       // Start fresh
+      console.log('🆕 STARTING FRESH - setting initial progress');
       setActivity(0);
       setQuestion(0);
       setInProgressUnit(unit.id);
@@ -739,6 +751,7 @@ function App() {
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
     setScreen('activity');
+    console.log('✅ startUnit complete');
   };
 
   const handleAnswer = (ans, correctAns, isText = false) => {
