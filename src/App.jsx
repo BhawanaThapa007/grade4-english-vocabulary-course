@@ -605,6 +605,11 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
+  
+  // Resume Progress States
+  const [inProgressUnit, setInProgressUnit] = useState(null);
+  const [inProgressActivity, setInProgressActivity] = useState(null);
+  const [inProgressQuestion, setInProgressQuestion] = useState(null);
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -632,6 +637,10 @@ function App() {
           questionsAnswered: 0,
           accuracyByActivity: {}
         });
+        // Load resume progress
+        setInProgressUnit(data.inProgressUnit || null);
+        setInProgressActivity(data.inProgressActivity || null);
+        setInProgressQuestion(data.inProgressQuestion || null);
         console.log('✅ Progress loaded successfully!');
       } else {
         console.log('ℹ️ No saved data found. Starting fresh!');
@@ -652,6 +661,9 @@ function App() {
         detailedProgress,
         activityRecords,
         sessionStats,
+        inProgressUnit,
+        inProgressActivity,
+        inProgressQuestion,
         lastUpdated: new Date().toISOString()
       };
       console.log('💾 Saving progress for:', student);
@@ -659,7 +671,7 @@ function App() {
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
       console.log('✅ Progress saved successfully!');
     }
-  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats]);
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion]);
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -708,8 +720,19 @@ function App() {
   };
 
   const startUnit = () => {
-    setActivity(0);
-    setQuestion(0);
+    // Check if resuming
+    if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
+      // Resume from saved position
+      setActivity(inProgressActivity);
+      setQuestion(inProgressQuestion);
+    } else {
+      // Start fresh
+      setActivity(0);
+      setQuestion(0);
+      setInProgressUnit(unit.id);
+      setInProgressActivity(0);
+      setInProgressQuestion(0);
+    }
     setUnitScore(0);
     setCorrect(0);
     setStreak(0);
@@ -771,6 +794,7 @@ function App() {
       
       if (nextQuestionNum < currentVocabSet.length) {
         setQuestion(nextQuestionNum);
+        setInProgressQuestion(nextQuestionNum); // Save progress
       } else {
         nextActivity();
       }
@@ -809,10 +833,14 @@ function App() {
       
       setTimeout(() => {
         setShowActivityComplete(false);
-        setActivity(prev => prev + 1);
+        const nextActivityNum = activity + 1;
+        setActivity(nextActivityNum);
         setQuestion(0);
         setInput('');
         setActivityStartTime(Date.now());
+        // Save progress for resume
+        setInProgressActivity(nextActivityNum);
+        setInProgressQuestion(0);
       }, 3500);
     } else {
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0;
@@ -847,6 +875,10 @@ function App() {
           setUnlocked(prev => [...prev, unit.id + 1]);
         }
       }
+      // Clear resume progress since unit is complete
+      setInProgressUnit(null);
+      setInProgressActivity(null);
+      setInProgressQuestion(null);
       setScreen('completion');
     }
   };
@@ -1064,6 +1096,25 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  const deleteStudent = (studentName) => {
+    const confirmDelete = window.confirm(
+      `⚠️ DELETE STUDENT?\n\n` +
+      `Student: ${studentName}\n\n` +
+      `This will permanently delete ALL data including:\n` +
+      `• Progress and scores\n` +
+      `• Activity records\n` +
+      `• All answers\n\n` +
+      `This CANNOT be undone!\n\n` +
+      `Delete this student?`
+    );
+
+    if (confirmDelete) {
+      localStorage.removeItem(`englishAdventure_${studentName}`);
+      alert(`✅ Student "${studentName}" deleted successfully.`);
+      setSelectedStudent(null);
+    }
+  };
+
   // Admin Dashboard Screen
   if (screen === 'admin' && isAdmin) {
     const allStudents = getAllStudents();
@@ -1128,12 +1179,14 @@ function App() {
                 allStudents.map((s, idx) => (
                   <div
                     key={idx}
-                    onClick={() => setSelectedStudent(s)}
-                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#667eea'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e7eb'}
+                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                   >
-                    <div>
+                    <div 
+                      onClick={() => setSelectedStudent(s)}
+                      style={{ flex: 1, cursor: 'pointer' }}
+                      onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'}
+                      onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = '#e5e7eb'}
+                    >
                       <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
                         {s.student || s.name}
                       </h3>
@@ -1144,7 +1197,32 @@ function App() {
                         <span>📝 {s.activityRecords ? s.activityRecords.length : 0} answers</span>
                       </div>
                     </div>
-                    <div style={{ fontSize: '24px', color: '#667eea' }}>→</div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteStudent(s.student || s.name);
+                        }}
+                        style={{ 
+                          padding: '8px 16px', 
+                          fontSize: '14px', 
+                          fontWeight: 'bold', 
+                          color: 'white', 
+                          background: '#ef4444', 
+                          border: 'none', 
+                          borderRadius: '8px', 
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
+                      <div 
+                        onClick={() => setSelectedStudent(s)}
+                        style={{ fontSize: '24px', color: '#667eea', cursor: 'pointer' }}
+                      >
+                        →
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
@@ -1462,11 +1540,41 @@ function App() {
             </div>
           </div>
 
-          <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer' }}>
-            🚀 Start Learning!
-          </button>
+          {inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null ? (
+            <>
+              <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '15px', padding: '20px', marginBottom: '15px', textAlign: 'center' }}>
+                <div style={{ fontSize: '32px', marginBottom: '10px' }}>📍</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#78350f', marginBottom: '5px' }}>
+                  You have progress saved!
+                </div>
+                <div style={{ fontSize: '16px', color: '#92400e' }}>
+                  Activity {inProgressActivity + 1}, Question {inProgressQuestion + 1}
+                </div>
+              </div>
+
+              <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
+                ▶️ Continue Where You Left Off
+              </button>
+
+              <button
+                onClick={() => {
+                  setInProgressUnit(null);
+                  setInProgressActivity(null);
+                  setInProgressQuestion(null);
+                  startUnit();
+                }}
+                style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}
+              >
+                🔄 Start Over from Beginning
+              </button>
+            </>
+          ) : (
+            <button onClick={startUnit} style={{ width: '100%', padding: '20px', fontSize: '22px', fontWeight: 'bold', color: 'white', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}>
+              🚀 Start Learning!
+            </button>
+          )}
           
-          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer', marginTop: '15px' }}>
+          <button onClick={() => setScreen('home')} style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#6b7280', background: 'white', border: '2px solid #e5e7eb', borderRadius: '15px', cursor: 'pointer' }}>
             ← Back to Home
           </button>
         </div>
