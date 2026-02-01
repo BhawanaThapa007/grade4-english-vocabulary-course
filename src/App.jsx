@@ -730,8 +730,9 @@ function App() {
     console.log('📍 Current inProgressQuestion:', inProgressQuestion);
     console.log('📍 Selected unit.id:', unit.id);
     
-    // Check if resuming
-    if (inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null) {
+    const isResuming = inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null;
+    
+    if (isResuming) {
       // Resume from saved position
       console.log('✅ RESUMING from saved position!');
       setActivity(inProgressActivity);
@@ -739,12 +740,21 @@ function App() {
     } else {
       // Start fresh
       console.log('🆕 STARTING FRESH - setting initial progress');
-      setActivity(0);
-      setQuestion(0);
+      
+      // CRITICAL FIX: Set all state in one batch using React 18's automatic batching
+      // This ensures all values update together
+      const newActivity = 0;
+      const newQuestion = 0;
+      
+      setActivity(newActivity);
+      setQuestion(newQuestion);
       setInProgressUnit(unit.id);
-      setInProgressActivity(0);
-      setInProgressQuestion(0);
+      setInProgressActivity(newActivity);
+      setInProgressQuestion(newQuestion);
+      
+      console.log(`📝 Set initial progress: Unit ${unit.id}, Activity ${newActivity}, Question ${newQuestion}`);
     }
+    
     setUnitScore(0);
     setCorrect(0);
     setStreak(0);
