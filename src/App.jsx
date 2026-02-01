@@ -606,10 +606,8 @@ function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   
-  // Resume Progress States
-  const [inProgressUnit, setInProgressUnit] = useState(null);
-  const [inProgressActivity, setInProgressActivity] = useState(null);
-  const [inProgressQuestion, setInProgressQuestion] = useState(null);
+  // Resume states - using simple null checks
+  const [resumeData, setResumeData] = useState({ unit: null, activity: null, question: null });
 
   useEffect(() => {
     setWelcomeMsg(welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)]);
@@ -637,14 +635,15 @@ function App() {
           questionsAnswered: 0,
           accuracyByActivity: {}
         });
-        // Load resume progress
-        console.log('📥 Loading resume progress from localStorage...');
-        console.log('  - inProgressUnit:', data.inProgressUnit);
-        console.log('  - inProgressActivity:', data.inProgressActivity);
-        console.log('  - inProgressQuestion:', data.inProgressQuestion);
-        setInProgressUnit(data.inProgressUnit || null);
-        setInProgressActivity(data.inProgressActivity || null);
-        setInProgressQuestion(data.inProgressQuestion || null);
+        // Load resume data
+        if (data.resumeUnit !== undefined) {
+          setResumeData({
+            unit: data.resumeUnit,
+            activity: data.resumeActivity,
+            question: data.resumeQuestion
+          });
+          console.log('📍 Resume data loaded:', data.resumeUnit, data.resumeActivity, data.resumeQuestion);
+        }
         console.log('✅ Progress loaded successfully!');
       } else {
         console.log('ℹ️ No saved data found. Starting fresh!');
@@ -665,9 +664,6 @@ function App() {
         detailedProgress,
         activityRecords,
         sessionStats,
-        inProgressUnit,
-        inProgressActivity,
-        inProgressQuestion,
         lastUpdated: new Date().toISOString()
       };
       console.log('💾 Saving progress for:', student);
@@ -675,7 +671,23 @@ function App() {
       localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(dataToSave));
       console.log('✅ Progress saved successfully!');
     }
-  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats, inProgressUnit, inProgressActivity, inProgressQuestion]);
+  }, [student, score, stars, completed, unlocked, maxStreak, hints, detailedProgress, activityRecords, sessionStats]);
+
+  // Helper function to save progress immediately (for resume feature)
+  const saveProgressNow = (unitId, activityNum, questionNum) => {
+    if (student) {
+      const currentData = localStorage.getItem(`englishAdventure_${student}`);
+      if (currentData) {
+        const data = JSON.parse(currentData);
+        data.resumeUnit = unitId;
+        data.resumeActivity = activityNum;
+        data.resumeQuestion = questionNum;
+        data.lastUpdated = new Date().toISOString();
+        localStorage.setItem(`englishAdventure_${student}`, JSON.stringify(data));
+        console.log(`📍 Resume progress saved: Unit ${unitId}, Activity ${activityNum}, Question ${questionNum}`);
+      }
+    }
+  };
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
@@ -724,35 +736,21 @@ function App() {
   };
 
   const startUnit = () => {
-    console.log('🚀 startUnit called');
-    console.log('📍 Current inProgressUnit:', inProgressUnit);
-    console.log('📍 Current inProgressActivity:', inProgressActivity);
-    console.log('📍 Current inProgressQuestion:', inProgressQuestion);
-    console.log('📍 Selected unit.id:', unit.id);
+    console.log('🚀 startUnit - checking resume data:', resumeData);
+    console.log('🎯 Current unit:', unit.id);
     
-    const isResuming = inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null;
-    
-    if (isResuming) {
-      // Resume from saved position
-      console.log('✅ RESUMING from saved position!');
-      setActivity(inProgressActivity);
-      setQuestion(inProgressQuestion);
+    // Check if we should resume
+    if (resumeData.unit === unit.id && resumeData.activity !== null && resumeData.question !== null) {
+      console.log('✅ RESUMING from:', resumeData);
+      setActivity(resumeData.activity);
+      setQuestion(resumeData.question);
     } else {
-      // Start fresh
-      console.log('🆕 STARTING FRESH - setting initial progress');
-      
-      // CRITICAL FIX: Set all state in one batch using React 18's automatic batching
-      // This ensures all values update together
-      const newActivity = 0;
-      const newQuestion = 0;
-      
-      setActivity(newActivity);
-      setQuestion(newQuestion);
-      setInProgressUnit(unit.id);
-      setInProgressActivity(newActivity);
-      setInProgressQuestion(newQuestion);
-      
-      console.log(`📝 Set initial progress: Unit ${unit.id}, Activity ${newActivity}, Question ${newQuestion}`);
+      console.log('🆕 STARTING FRESH');
+      setActivity(0);
+      setQuestion(0);
+      // Save initial progress immediately
+      saveProgressNow(unit.id, 0, 0);
+      setResumeData({ unit: unit.id, activity: 0, question: 0 });
     }
     
     setUnitScore(0);
@@ -761,7 +759,6 @@ function App() {
     setUnitStartTime(Date.now());
     setActivityStartTime(Date.now());
     setScreen('activity');
-    console.log('✅ startUnit complete');
   };
 
   const handleAnswer = (ans, correctAns, isText = false) => {
@@ -817,7 +814,9 @@ function App() {
       
       if (nextQuestionNum < currentVocabSet.length) {
         setQuestion(nextQuestionNum);
-        setInProgressQuestion(nextQuestionNum); // Save progress
+        // Save progress immediately
+        saveProgressNow(unit.id, activity, nextQuestionNum);
+        setResumeData({ unit: unit.id, activity: activity, question: nextQuestionNum });
       } else {
         nextActivity();
       }
@@ -856,14 +855,14 @@ function App() {
       
       setTimeout(() => {
         setShowActivityComplete(false);
-        const nextActivityNum = activity + 1;
-        setActivity(nextActivityNum);
+        const nextAct = activity + 1;
+        setActivity(nextAct);
         setQuestion(0);
         setInput('');
         setActivityStartTime(Date.now());
-        // Save progress for resume
-        setInProgressActivity(nextActivityNum);
-        setInProgressQuestion(0);
+        // Save progress for next activity
+        saveProgressNow(unit.id, nextAct, 0);
+        setResumeData({ unit: unit.id, activity: nextAct, question: 0 });
       }, 3500);
     } else {
       const timeSpent = unitStartTime ? Math.round((Date.now() - unitStartTime) / 1000 / 60) : 0;
@@ -898,10 +897,9 @@ function App() {
           setUnlocked(prev => [...prev, unit.id + 1]);
         }
       }
-      // Clear resume progress since unit is complete
-      setInProgressUnit(null);
-      setInProgressActivity(null);
-      setInProgressQuestion(null);
+      // Clear resume data since unit is complete
+      saveProgressNow(null, null, null);
+      setResumeData({ unit: null, activity: null, question: null });
       setScreen('completion');
     }
   };
@@ -1120,20 +1118,9 @@ function App() {
   };
 
   const deleteStudent = (studentName) => {
-    const confirmDelete = window.confirm(
-      `⚠️ DELETE STUDENT?\n\n` +
-      `Student: ${studentName}\n\n` +
-      `This will permanently delete ALL data including:\n` +
-      `• Progress and scores\n` +
-      `• Activity records\n` +
-      `• All answers\n\n` +
-      `This CANNOT be undone!\n\n` +
-      `Delete this student?`
-    );
-
-    if (confirmDelete) {
+    if (window.confirm(`⚠️ DELETE STUDENT?\n\nStudent: ${studentName}\n\nThis will permanently delete ALL data!\n\nThis CANNOT be undone!\n\nDelete?`)) {
       localStorage.removeItem(`englishAdventure_${studentName}`);
-      alert(`✅ Student "${studentName}" deleted successfully.`);
+      alert(`✅ Student "${studentName}" deleted.`);
       setSelectedStudent(null);
     }
   };
@@ -1200,16 +1187,8 @@ function App() {
                 </div>
               ) : (
                 allStudents.map((s, idx) => (
-                  <div
-                    key={idx}
-                    style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                  >
-                    <div 
-                      onClick={() => setSelectedStudent(s)}
-                      style={{ flex: 1, cursor: 'pointer' }}
-                      onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'}
-                      onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = '#e5e7eb'}
-                    >
+                  <div key={idx} style={{ background: 'white', border: '2px solid #e5e7eb', borderRadius: '18px', padding: '20px', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div onClick={() => setSelectedStudent(s)} style={{ flex: 1, cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.parentElement.style.borderColor = '#667eea'} onMouseLeave={(e) => e.currentTarget.parentElement.style.borderColor = '#e5e7eb'}>
                       <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
                         {s.student || s.name}
                       </h3>
@@ -1221,30 +1200,10 @@ function App() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteStudent(s.student || s.name);
-                        }}
-                        style={{ 
-                          padding: '8px 16px', 
-                          fontSize: '14px', 
-                          fontWeight: 'bold', 
-                          color: 'white', 
-                          background: '#ef4444', 
-                          border: 'none', 
-                          borderRadius: '8px', 
-                          cursor: 'pointer'
-                        }}
-                      >
+                      <button onClick={(e) => { e.stopPropagation(); deleteStudent(s.student || s.name); }} style={{ padding: '8px 16px', fontSize: '14px', fontWeight: 'bold', color: 'white', background: '#ef4444', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                         🗑️ Delete
                       </button>
-                      <div 
-                        onClick={() => setSelectedStudent(s)}
-                        style={{ fontSize: '24px', color: '#667eea', cursor: 'pointer' }}
-                      >
-                        →
-                      </div>
+                      <div onClick={() => setSelectedStudent(s)} style={{ fontSize: '24px', color: '#667eea', cursor: 'pointer' }}>→</div>
                     </div>
                   </div>
                 ))
@@ -1563,7 +1522,7 @@ function App() {
             </div>
           </div>
 
-          {inProgressUnit === unit.id && inProgressActivity !== null && inProgressQuestion !== null ? (
+          {resumeData.unit === unit.id && resumeData.activity !== null && resumeData.question !== null ? (
             <>
               <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', borderRadius: '15px', padding: '20px', marginBottom: '15px', textAlign: 'center' }}>
                 <div style={{ fontSize: '32px', marginBottom: '10px' }}>📍</div>
@@ -1571,7 +1530,7 @@ function App() {
                   You have progress saved!
                 </div>
                 <div style={{ fontSize: '16px', color: '#92400e' }}>
-                  Activity {inProgressActivity + 1}, Question {inProgressQuestion + 1}
+                  Activity {resumeData.activity + 1}, Question {resumeData.question + 1}
                 </div>
               </div>
 
@@ -1581,9 +1540,8 @@ function App() {
 
               <button
                 onClick={() => {
-                  setInProgressUnit(null);
-                  setInProgressActivity(null);
-                  setInProgressQuestion(null);
+                  saveProgressNow(null, null, null);
+                  setResumeData({ unit: null, activity: null, question: null });
                   startUnit();
                 }}
                 style={{ width: '100%', padding: '15px', fontSize: '16px', fontWeight: 'bold', color: '#667eea', background: 'white', border: '2px solid #667eea', borderRadius: '15px', cursor: 'pointer', marginBottom: '15px' }}
